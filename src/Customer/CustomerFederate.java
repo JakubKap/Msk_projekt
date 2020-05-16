@@ -146,7 +146,7 @@ public class CustomerFederate
      */
     private void log( String message )
     {
-        System.out.println( "ExampleFederate   : " + message );
+        System.out.println( "CustomerFederate   : " + message );
     }
 
     /**
@@ -201,7 +201,7 @@ public class CustomerFederate
                     (new File("foms/ShopFom.xml")).toURI().toURL()
             };
 
-            rtiamb.createFederationExecution( "ExampleFederation", modules );
+            rtiamb.createFederationExecution( "CustomerFederation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -219,12 +219,12 @@ public class CustomerFederate
         // 4. join the federation //
         ////////////////////////////
         URL[] joinModules = new URL[]{
-                (new File("foms/RestaurantSoup.xml")).toURI().toURL()
+                (new File("foms/ShopFom.xml")).toURI().toURL()
         };
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
-                "ExampleFederateType",   // federate type
-                "ExampleFederation",     // name of federation
+                "CustomerFederateType",   // federate type
+                "CustomerFederation",     // name of federation
                 joinModules );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
@@ -323,7 +323,7 @@ public class CustomerFederate
         //       remain. in that case we'll leave it for them to clean up
         try
         {
-            rtiamb.destroyFederationExecution( "ExampleFederation" );
+            rtiamb.destroyFederationExecution( "CustomerFederation" );
             log( "Destroyed Federation" );
         }
         catch( FederationExecutionDoesNotExist dne )
@@ -546,7 +546,7 @@ public class CustomerFederate
     public static void main( String[] args )
     {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "exampleFederate";
+        String federateName = "customerFederate";
         if( args.length != 0 )
         {
             federateName = args[0];
