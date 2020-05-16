@@ -186,7 +186,7 @@
                 </attribute>
                 <attribute>
                     <name>avgNumberOfProductsInBasket</name>
-                    <dataType>HLAfloat32BE</dataType>
+                    <dataType>HLAinteger32BE</dataType>
                     <updateType>Conditional</updateType>
                     <updateCondition>On Change</updateCondition>
                     <ownership>Divest</ownership>
@@ -197,7 +197,7 @@
                 </attribute>
                 <attribute>
                     <name>percentOfPrivilegedCheckouts</name>
-                    <dataType>HLAfloat32BE</dataType>
+                    <dataType>HLAinteger32BE</dataType>
                     <updateType>Conditional</updateType>
                     <updateCondition>On Change</updateCondition>
                     <ownership>Divest</ownership>
@@ -208,7 +208,7 @@
                 </attribute>
                 <attribute>
                     <name>avgNumberOfClientsInQueue</name>
-                    <dataType>HLAfloat32BE</dataType>
+                    <dataType>HLAinteger32BE</dataType>
                     <updateType>Conditional</updateType>
                     <updateCondition>On Change</updateCondition>
                     <ownership>Divest</ownership>
