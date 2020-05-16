@@ -1,0 +1,398 @@
+<?xml version='1.0' encoding='utf-8'?>
+<objectModel
+ xmlns='http://standards.ieee.org/IEEE1516-2010'
+ xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+ xsi:schemaLocation='http://standards.ieee.org/IEEE1516-2010 http://standards.ieee.org/downloads/1516/1516.2-2010/IEEE1516-DIF-2010.xsd'  >
+	<modelIdentification>
+		<name>Shop</name>
+		<type>FOM</type>
+		<version>1.0</version>
+	</modelIdentification>
+	<objects>
+		<objectClass>
+			<name>HLAobjectRoot</name>
+			<objectClass>
+				<name>Customer</name>
+				<sharing>PublishSubscribe</sharing>
+				<semantics>klient w sklepie</semantics>
+				<attribute>
+					<name>id</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Numer identyfikacyjny klienta</semantics>
+				</attribute>
+                <attribute>
+					<name>numberOfProductsInBasket</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Liczba produktów, które klient spakował do koszyka podczas robienia zakupów</semantics>
+				</attribute>
+                <attribute>
+					<name>valueOfProducts</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Wartość produktów wybranych przez klienta</semantics>
+				</attribute>
+			</objectClass>
+            <objectClass>
+				<name>Checkout</name>
+				<sharing>PublishSubscribe</sharing>
+				<semantics>kasa w sklepie</semantics>
+				<attribute>
+					<name>id</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Numer identyfikacyjny kasy</semantics>
+				</attribute>
+				<attribute>
+					<name>isPrivileged</name>
+					<dataType>HLAboolean</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Czy kasa jest uprzywilejowana</semantics>
+				</attribute>
+				<attribute>
+					<name>isFree</name>
+					<dataType>HLAboolean</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Czy kasa obecnie obsługuje klienta</semantics>
+				</attribute>
+            </objectClass>
+            <objectClass>
+                <name>Queue</name>
+                <sharing>PublishSubscribe</sharing>
+                <semantics>kolejka do kasy w sklepie</semantics>
+                <attribute>
+                    <name>id</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Numer identyfikacyjny kolejki</semantics>
+                </attribute>
+                <attribute>
+                    <name>maxLimit</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Maksymalna liczba osób w kolejce</semantics>
+                </attribute>
+                <attribute>
+                    <name>customerListIds</name>
+                    <dataType>HLAvariableArray</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Identyfikatory klientów ustawionych w kolejce</semantics>
+                </attribute>
+                <attribute>
+                    <name>checkoutId</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Kasa, do której prowadzi kolejka</semantics>
+                </attribute>
+            </objectClass>
+            <objectClass>
+                <name>Statistics</name>
+                <sharing>PublishSubscribe</sharing>
+                <semantics>statystyki</semantics>
+                <attribute>
+                    <name>avgPayingDuration</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Jak długo (średnio) trwa płacenie (w milisekundach)</semantics>
+                </attribute>
+                <attribute>
+                    <name>avgBeingInShopDuration</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Jak długo (średnio) trwa przebywanie klienta w sklepie (w milisekundach)</semantics>
+                </attribute>
+                <attribute>
+                    <name>avgBeingInQueueDuration</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Jak długo (średnio) klient przebywa w kolejce (w milisekundach)</semantics>
+                </attribute>
+                <attribute>
+                    <name>avgBeingInCheckoutDuration</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Jak długo (średnio) klient przebywa przy kasie (w milisekundach)</semantics>
+                </attribute>
+                <attribute>
+                    <name>avgNumberOfProductsInBasket</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Średnia liczba produktów w koszyku klienta (zaokrąglona w górę do części całkowitej)</semantics>
+                </attribute>
+                <attribute>
+                    <name>percentOfPrivilegedCheckouts</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Procent uprzywilejowanych kas (zaokrąglony do części całkowitej)</semantics>
+                </attribute>
+                <attribute>
+                    <name>avgNumberOfClientsInQueue</name>
+                    <dataType>HLAfloat32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Średnia liczba klientów w kolejce (zaokrąglona w górę do części całkowitej)</semantics>
+                </attribute>
+            </objectClass>
+		</objectClass>
+	</objects>
+    <interactions>
+    	<interactionClass>
+    		<name>HLAinteractionRoot</name>
+    		<interactionClass>
+    			<name>StartSimulation</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie rozpoczynające symulację</semantics>
+    			<parameter>
+    				<name>maxQueueSize</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Maksymalny rozmiar kolejki</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>numberOfCustomers</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Liczba wszystkich klientów biorących udział w symulacji</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>percentageOfCustomersDoingSmallShopping</name>
+    				<dataType>HLAfloat32BE</dataType>
+    				<semantics>Procent wszystkich klientów biorących udział w symulacji (od 0.0 do 1.0)</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>initialNumberOfCheckouts</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Początkowa liczba kas w sklepie</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>EndSimulation</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie kończące symulację</semantics>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>EnterShop</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie wejścia klienta do sklepu</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>EndShopping</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie zrobienia zakupów przez klienta</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>EnterQueue</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie ustawienia się klienta w kolejce</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>queueId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator kolejki</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>CreateCheckout</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie dodania nowej kasy</semantics>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>EnterCheckout</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie podejścia klienta do kasy</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>checkoutId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator kasy</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>ServicingCustomer</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie podejścia klienta do kasy</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>checkoutId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator kasy</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>Pay</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie płacenia za zakupy przez klienta</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>checkoutId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator kasy</semantics>
+    			</parameter>
+    			<parameter>
+    				<name>price</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Liczba jednostek pieniędzy, którymi klient płaci za zakupy</semantics>
+    			</parameter>
+    		</interactionClass>
+    		<interactionClass>
+    			<name>ExitShop</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie wyjścia klienta ze sklepu</semantics>
+    			<parameter>
+    				<name>customerId</name>
+    				<dataType>HLAinteger32BE</dataType>
+    				<semantics>Identyfikator klienta</semantics>
+    			</parameter>
+    		</interactionClass>
+    	</interactionClass>
+    </interactions>
+	<dimensions/>
+	<synchronizations>
+		<synchronizationPoint>
+			<label>ReadyRoRun</label>
+			<dataType>NA</dataType>
+			<capability>NA</capability>
+			<semantics>Waiting for each federate joining</semantics>
+		</synchronizationPoint>
+	</synchronizations>
+	<transportations/>
+	<updateRates/>
+	<dataTypes>
+		<basicDataRepresentations/>
+		<simpleDataTypes/>
+		<enumeratedDataTypes/>
+		<arrayDataTypes/>
+		<fixedRecordDataTypes/>
+		<variantRecordDataTypes/>
+	</dataTypes>
+	<notes/>
+</objectModel>
