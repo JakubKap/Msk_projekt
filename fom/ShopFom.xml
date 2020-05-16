@@ -327,7 +327,7 @@
     			<sharing>PublishSubscribe</sharing>
     			<transportation>HLAreliable</transportation>
     			<order>TimeStamp</order>
-    			<semantics>Zdarzenie podejścia klienta do kasy</semantics>
+    			<semantics>Zdarzenie obsługiwania klienta</semantics>
     			<parameter>
     				<name>customerId</name>
     				<dataType>HLAinteger32BE</dataType>
