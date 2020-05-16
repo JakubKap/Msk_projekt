@@ -129,10 +129,34 @@ public class CustomerFederate
     protected EncoderFactory encoderFactory;     // set when we join
 
     // caches of handle types - set once we join a federation
-    protected ObjectClassHandle sodaHandle;
-    protected AttributeHandle cupsHandle;
-    protected AttributeHandle flavHandle;
-    protected InteractionClassHandle servedHandle;
+//    protected ObjectClassHandle sodaHandle;
+//    protected AttributeHandle cupsHandle;
+//    protected AttributeHandle flavHandle;
+//    protected InteractionClassHandle servedHandle;
+
+    protected ObjectClassHandle customerHandle;
+    protected AttributeHandle customerIdHandle;
+    protected AttributeHandle numberOfProductsInBasketHandle;
+    protected AttributeHandle valueOfProductsHandle;
+
+    protected ObjectClassHandle queueHandle;
+    protected AttributeHandle customerListIdsHandle;
+    protected AttributeHandle queueIdHandle;
+    protected AttributeHandle maxLimitHandle;
+    protected AttributeHandle checkoutIdRefHandle;
+    protected ObjectClassHandle checkoutHandle;
+    protected AttributeHandle checkoutIdHandle;
+    protected AttributeHandle isPrivilegedHandle;
+    protected AttributeHandle isFreeHandle;
+
+    protected InteractionClassHandle startSimulationHandle;
+    private InteractionClassHandle endShoppingHandle;
+    private InteractionClassHandle servicingCustomerHandle;
+    private InteractionClassHandle enterShopHandle;
+    private InteractionClassHandle enterQueueHandle;
+    private InteractionClassHandle enterCheckoutHandle;
+    private InteractionClassHandle payHandle;
+    private InteractionClassHandle exitShopHandle;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -388,43 +412,84 @@ public class CustomerFederate
         // update the values of the various attributes, we need to tell the RTI
         // that we intend to publish this information
 
-        // get all the handle information for the attributes of Food.Drink.Soda
-        this.sodaHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Food.Drink.Soda" );
-        this.cupsHandle = rtiamb.getAttributeHandle( sodaHandle, "NumberCups" );
-        this.flavHandle = rtiamb.getAttributeHandle( sodaHandle, "Flavor" );
+        // get all the handle information for the attributes of customer
+        this.customerHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Customer");
+        this.customerIdHandle = rtiamb.getAttributeHandle( customerHandle, "id" );
+        this.numberOfProductsInBasketHandle = rtiamb.getAttributeHandle( customerHandle, "numberOfProductsInBasket" );
+        this.valueOfProductsHandle = rtiamb.getAttributeHandle( customerHandle, "valueOfProducts" );
+
         // package the information into a handle set
-        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-        attributes.add( cupsHandle );
-        attributes.add( flavHandle );
+        AttributeHandleSet customerAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        customerAttributes.add( customerIdHandle );
+        customerAttributes.add( numberOfProductsInBasketHandle );
+        customerAttributes.add( valueOfProductsHandle );
 
-        // do the actual publication
-        rtiamb.publishObjectClassAttributes( sodaHandle, attributes );
+        // do the customerHandle publication
+        rtiamb.publishObjectClassAttributes( customerHandle, customerAttributes );
 
-        ////////////////////////////////////////////////////
-        // subscribe to all attributes of Food.Drink.Soda //
-        ////////////////////////////////////////////////////
-        // we also want to hear about the same sort of information as it is
-        // created and altered in other federates, so we need to subscribe to it
-        rtiamb.subscribeObjectClassAttributes( sodaHandle, attributes );
+        //------
+        // get all the handle information for the attributes of queue
+        this.queueHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Queue");
+        this.queueIdHandle = rtiamb.getAttributeHandle(queueHandle, "id");
+        this.maxLimitHandle = rtiamb.getAttributeHandle(queueHandle, "maxLimit");
+        this.customerListIdsHandle = rtiamb.getAttributeHandle(queueHandle, "customerListIds");
+        this.checkoutIdRefHandle = rtiamb.getAttributeHandle(queueHandle, "checkoutId");
+
+        AttributeHandleSet queueAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        queueAttributes.add(queueIdHandle);
+        queueAttributes.add(maxLimitHandle);
+        queueAttributes.add(customerListIdsHandle);
+        queueAttributes.add(checkoutIdHandle);
+
+        rtiamb.subscribeObjectClassAttributes(queueHandle, queueAttributes);
+
+        //------
+        // get all the handle information for the attributes of checkout
+        this.checkoutHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Checkout");
+        checkoutIdHandle = rtiamb.getAttributeHandle(checkoutHandle, "id");
+        isPrivilegedHandle = rtiamb.getAttributeHandle(checkoutHandle, "isPrivileged");
+        isFreeHandle = rtiamb.getAttributeHandle(checkoutHandle, "isFree");
+
+        AttributeHandleSet checkoutAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        checkoutAttributes.add(checkoutIdHandle);
+        checkoutAttributes.add(isPrivilegedHandle);
+        checkoutAttributes.add(isFreeHandle);
+
+        rtiamb.subscribeObjectClassAttributes(checkoutHandle, checkoutAttributes);
 
         //////////////////////////////////////////////////////////
-        // publish the interaction class FoodServed.DrinkServed //
-        //////////////////////////////////////////////////////////
-        // we want to send interactions of type FoodServed.DrinkServed, so we need
-        // to tell the RTI that we're publishing it first. We don't need to
-        // inform it of the parameters, only the class, making it much simpler
-        String iname = "HLAinteractionRoot.CustomerTransactions.FoodServed.DrinkServed";
-        servedHandle = rtiamb.getInteractionClassHandle( iname );
+        // subscribe the interaction class StartSimulation //
+        startSimulationHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.StartSimulation" );
+        rtiamb.subscribeInteractionClass(startSimulationHandle);
 
-        // do the publication
-        rtiamb.publishInteractionClass( servedHandle );
+        // subscribe the interaction class ServicingCustomer //
+        servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
+        rtiamb.subscribeInteractionClass(servicingCustomerHandle);
 
-        /////////////////////////////////////////////////////////
-        // subscribe to the FoodServed.DrinkServed interaction //
-        /////////////////////////////////////////////////////////
-        // we also want to receive other interaction of the same type that are
-        // sent out by other federates, so we have to subscribe to it first
-        rtiamb.subscribeInteractionClass( servedHandle );
+        // publish the interaction class EnterShop //
+        enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
+        rtiamb.publishInteractionClass(enterShopHandle);
+
+        // publish the interaction class EndShopping //
+        endShoppingHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EndShopping" );
+        rtiamb.publishInteractionClass(endShoppingHandle);
+
+        // publish the interaction class EnterQueue //
+        enterQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterQueue" );
+        rtiamb.publishInteractionClass(enterQueueHandle);
+
+        // publish the interaction class EnterCheckout //
+        enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
+        rtiamb.publishInteractionClass(enterCheckoutHandle);
+
+        // publish the interaction class Pay //
+        payHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.Pay" );
+        rtiamb.publishInteractionClass(payHandle);
+
+        // publish the interaction class ExitShop //
+        exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
+        rtiamb.publishInteractionClass(exitShopHandle);
+
     }
 
     /**
@@ -434,7 +499,7 @@ public class CustomerFederate
      */
     private ObjectInstanceHandle registerObject() throws RTIexception
     {
-        return rtiamb.registerObjectInstance( sodaHandle );
+        return rtiamb.registerObjectInstance( customerHandle );
     }
 
     /**
@@ -460,13 +525,13 @@ public class CustomerFederate
 
         // generate the value for the number of cups (same as the timestep)
         HLAinteger16BE cupsValue = encoderFactory.createHLAinteger16BE( getTimeAsShort() );
-        attributes.put( cupsHandle, cupsValue.toByteArray() );
+//        attributes.put( cupsHandle, cupsValue.toByteArray() );
 
         // generate the value for the flavour on our magically flavour changing drink
         // the values for the enum are defined in the FOM
         int randomValue = 101 + new Random().nextInt(3);
         HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE( randomValue );
-        attributes.put( flavHandle, flavValue.toByteArray() );
+//        attributes.put( flavHandle, flavValue.toByteArray() );
 
         //////////////////////////
         // do the actual update //
@@ -491,13 +556,13 @@ public class CustomerFederate
         // send the interaction //
         //////////////////////////
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
-        rtiamb.sendInteraction( servedHandle, parameters, generateTag() );
+//        rtiamb.sendInteraction( servedHandle, parameters, generateTag() );
 
         // if you want to associate a particular timestamp with the
         // interaction, you will have to supply it to the RTI. Here
         // we send another interaction, this time with a timestamp:
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.sendInteraction( servedHandle, parameters, generateTag(), time );
+//        rtiamb.sendInteraction( servedHandle, parameters, generateTag(), time );
     }
 
     /**
