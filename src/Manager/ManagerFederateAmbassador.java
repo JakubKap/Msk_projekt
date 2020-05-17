@@ -55,6 +55,7 @@ class ManagerFederateAmbassador extends NullFederateAmbassador
 
     protected boolean isAnnounced        = false;
     protected boolean isReadyToRun       = false;
+    protected boolean isRunning       = true;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS

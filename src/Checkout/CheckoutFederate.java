@@ -232,8 +232,8 @@ public class CheckoutFederate
         };
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
-                "CustomerFederateType",   // federate type
-                "CustomerFederation",     // name of federation
+                "checkout",   // federate type
+                "Federation",     // name of federation
                 joinModules );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
@@ -300,7 +300,7 @@ public class CheckoutFederate
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        for( int i = 0; i < ITERATIONS; i++ )
+        while( fedamb.isRunning )
         {
             // 9.1 update the attribute values of the instance //
             updateAttributeValues( objectHandle );
@@ -560,7 +560,7 @@ public class CheckoutFederate
     public static void main( String[] args )
     {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "customerFederate";
+        String federateName = "Checkout";
         if( args.length != 0 )
         {
             federateName = args[0];
