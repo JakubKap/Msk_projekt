@@ -439,7 +439,7 @@ public class CustomerFederate
         queueAttributes.add(queueIdHandle);
         queueAttributes.add(maxLimitHandle);
         queueAttributes.add(customerListIdsHandle);
-        queueAttributes.add(checkoutIdHandle);
+        queueAttributes.add(checkoutIdRefHandle);
 
         rtiamb.subscribeObjectClassAttributes(queueHandle, queueAttributes);
 

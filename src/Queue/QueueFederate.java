@@ -12,7 +12,7 @@
  *   (that goes for your lawyer as well)
  *
  */
-package Manager;
+package Queue;
 
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleSet;
@@ -109,7 +109,7 @@ import java.util.Random;
  * In the demonstration, the first three modules are loaded as part of the federation creation
  * process, with the example federate providing the Soup-based extension when it joins.
  */
-public class ManagerFederate
+public class QueueFederate
 {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
@@ -124,7 +124,7 @@ public class ManagerFederate
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private ManagerFederateAmbassador fedamb;  // created when we connect
+    private QueueFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
@@ -134,24 +134,23 @@ public class ManagerFederate
 //    protected AttributeHandle flavHandle;
 //    protected InteractionClassHandle servedHandle;
 
-    protected ObjectClassHandle statisticsHandle;
-    protected AttributeHandle avgPayingDurationHandle;
-    protected AttributeHandle avgBeingInShopDurationHandle;
-    protected AttributeHandle avgBeingInQueueDurationHandle;
-    protected AttributeHandle avgBeingInCheckoutDurationHandle;
-    protected AttributeHandle avgNumberOfProductsInBasketHandle;
-    protected AttributeHandle percentOfPrivilegedCheckoutsHandle;
-    protected AttributeHandle avgNumberOfClientsInQueueHandle;
+    private ObjectClassHandle customerHandle;
+    private ObjectClassHandle queueHandle;
+    private ObjectClassHandle checkoutHandle;
+    private AttributeHandle customerIdHandle;
+    private AttributeHandle numberOfProductsInBasketHandle;
+    private AttributeHandle valueOfProductsHandle;
+    private AttributeHandle queueIdHandle;
+    private AttributeHandle maxLimitHandle;
+    private AttributeHandle customerListIdsHandle;
+    private AttributeHandle checkoutIdRefHandle;
+    private AttributeHandle checkoutIdHandle;
+    private AttributeHandle isPrivilegedHandle;
+    private AttributeHandle isFreeHandle;
 
-
-    protected InteractionClassHandle startSimulationHandle;
-    private InteractionClassHandle enterShopHandle;
     private InteractionClassHandle enterQueueHandle;
     private InteractionClassHandle enterCheckoutHandle;
     private InteractionClassHandle createCheckoutHandle;
-    private InteractionClassHandle servicingCustomerHandle;
-    private InteractionClassHandle payHandle;
-    private InteractionClassHandle exitShopHandle;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -205,7 +204,7 @@ public class ManagerFederate
 
         // connect
         log( "Connecting..." );
-        fedamb = new ManagerFederateAmbassador( this );
+        fedamb = new QueueFederateAmbassador( this );
         rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
 
         //////////////////////////////
@@ -407,37 +406,57 @@ public class ManagerFederate
         // update the values of the various attributes, we need to tell the RTI
         // that we intend to publish this information
 
+        // get all the handle information for the attributes of queue
+        this.queueHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Queue");
+        this.queueIdHandle = rtiamb.getAttributeHandle(queueHandle, "id");
+        this.maxLimitHandle = rtiamb.getAttributeHandle(queueHandle, "maxLimit");
+        this.customerListIdsHandle = rtiamb.getAttributeHandle(queueHandle, "customerListIds");
+        this.checkoutIdRefHandle = rtiamb.getAttributeHandle(queueHandle, "checkoutId");
+
+        AttributeHandleSet queueAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        queueAttributes.add(queueIdHandle);
+        queueAttributes.add(maxLimitHandle);
+        queueAttributes.add(customerListIdsHandle);
+        queueAttributes.add(checkoutIdRefHandle);
+
+        // do the queueHandle publication
+        rtiamb.publishObjectClassAttributes(queueHandle, queueAttributes);
+
+        //-------
+        // get all the handle information for the attributes of customer
+        this.customerHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Customer");
+        this.customerIdHandle = rtiamb.getAttributeHandle( customerHandle, "id" );
+        this.numberOfProductsInBasketHandle = rtiamb.getAttributeHandle( customerHandle, "numberOfProductsInBasket" );
+        this.valueOfProductsHandle = rtiamb.getAttributeHandle( customerHandle, "valueOfProducts" );
+
+        // package the information into a handle set
+        AttributeHandleSet customerAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        customerAttributes.add( customerIdHandle );
+        customerAttributes.add( numberOfProductsInBasketHandle );
+        customerAttributes.add( valueOfProductsHandle );
+
+        // do the customerHandle subscription
+        rtiamb.subscribeObjectClassAttributes( customerHandle, customerAttributes );
 
         //------
-        // get all the handle information for the attributes of statistics
-        this.statisticsHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Statistics");
-        this.avgPayingDurationHandle = rtiamb.getAttributeHandle(statisticsHandle, "avgPayingDuration");
-        this.avgBeingInShopDurationHandle = rtiamb.getAttributeHandle(statisticsHandle, "avgBeingInShopDuration");
-        this.avgBeingInQueueDurationHandle = rtiamb.getAttributeHandle(statisticsHandle, "avgBeingInQueueDuration");
-        this.avgBeingInCheckoutDurationHandle = rtiamb.getAttributeHandle(statisticsHandle, "avgBeingInCheckoutDuration");
-        this.avgNumberOfProductsInBasketHandle = rtiamb.getAttributeHandle(statisticsHandle, "avgNumberOfProductsInBasket");
-        this.percentOfPrivilegedCheckoutsHandle = rtiamb.getAttributeHandle(statisticsHandle, "percentOfPrivilegedCheckouts");
-        this.avgNumberOfClientsInQueueHandle = rtiamb.getAttributeHandle(statisticsHandle, "avgNumberOfClientsInQueue");
+        // get all the handle information for the attributes of checkout
+        this.checkoutHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Checkout");
+        this.checkoutIdHandle = rtiamb.getAttributeHandle(checkoutHandle, "id");
+        this.isPrivilegedHandle = rtiamb.getAttributeHandle(checkoutHandle, "isPrivileged");
+        this.isFreeHandle = rtiamb.getAttributeHandle(checkoutHandle, "isFree");
 
-        AttributeHandleSet statisitcsAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        statisitcsAttributes.add(avgPayingDurationHandle);
-        statisitcsAttributes.add(avgBeingInShopDurationHandle);
-        statisitcsAttributes.add(avgBeingInQueueDurationHandle);
-        statisitcsAttributes.add(avgBeingInCheckoutDurationHandle);
-        statisitcsAttributes.add(avgNumberOfProductsInBasketHandle);
-        statisitcsAttributes.add(percentOfPrivilegedCheckoutsHandle);
-        statisitcsAttributes.add(avgNumberOfClientsInQueueHandle);
+        AttributeHandleSet checkoutAttributes = rtiamb.getAttributeHandleSetFactory().create();
+        checkoutAttributes.add(checkoutIdHandle);
+        checkoutAttributes.add(isPrivilegedHandle);
+        checkoutAttributes.add(isFreeHandle);
 
-        rtiamb.subscribeObjectClassAttributes(statisticsHandle, statisitcsAttributes);
+        // do the checkoutHandle subscription
+        rtiamb.subscribeObjectClassAttributes(checkoutHandle, checkoutAttributes);
 
         //////////////////////////////////////////////////////////
-        // publish the interaction class StartSimulation //
-        startSimulationHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.StartSimulation" );
-        rtiamb.publishInteractionClass(startSimulationHandle);
-
-        // subscribe the interaction class EnterShop //
-        enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
-        rtiamb.subscribeInteractionClass(enterShopHandle);
+        // publish the interaction class CreateCheckout //
+        createCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.CreateCheckout" );
+        rtiamb.publishInteractionClass(createCheckoutHandle);
 
         // subscribe the interaction class EnterQueue //
         enterQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterQueue" );
@@ -446,23 +465,6 @@ public class ManagerFederate
         // subscribe the interaction class EnterCheckout //
         enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
         rtiamb.subscribeInteractionClass(enterCheckoutHandle);
-
-        // subscribe the interaction class CreateCheckout //
-        createCheckoutHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.CreateCheckout");
-        rtiamb.subscribeInteractionClass(createCheckoutHandle);
-
-        // subscribe the interaction class ServicingCustomer //
-        servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
-        rtiamb.subscribeInteractionClass(servicingCustomerHandle);
-
-        // subscribe the interaction class Pay //
-        payHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.Pay" );
-        rtiamb.subscribeInteractionClass(payHandle);
-
-        // subscribe the interaction class ExitShop //
-        exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
-        rtiamb.subscribeInteractionClass(exitShopHandle);
-
     }
 
     /**
@@ -472,7 +474,7 @@ public class ManagerFederate
      */
     private ObjectInstanceHandle registerObject() throws RTIexception
     {
-        return rtiamb.registerObjectInstance(statisticsHandle);
+        return rtiamb.registerObjectInstance(queueHandle);
     }
 
     /**
@@ -593,7 +595,7 @@ public class ManagerFederate
         try
         {
             // run the example federate
-            new ManagerFederate().runFederate( federateName );
+            new QueueFederate().runFederate( federateName );
         }
         catch( Exception rtie )
         {
@@ -602,3 +604,4 @@ public class ManagerFederate
         }
     }
 }
+
