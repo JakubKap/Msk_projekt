@@ -14,24 +14,14 @@
  */
 package Customer;
 
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
+import hla.rti.LogicalTime;
+import hla.rti.SuppliedParameters;
+import hla.rti.jlc.EncodingHelpers;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -151,6 +141,7 @@ public class CustomerFederate
     private InteractionClassHandle enterCheckoutHandle;
     private InteractionClassHandle payHandle;
     private InteractionClassHandle exitShopHandle;
+    private int customerId;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -219,7 +210,7 @@ public class CustomerFederate
                     (new File("foms/ShopFom.xml")).toURI().toURL()
             };
 
-            rtiamb.createFederationExecution( "CustomerFederation", modules );
+            rtiamb.createFederationExecution( "Federation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -309,17 +300,21 @@ public class CustomerFederate
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        while( fedamb.isRunning )
+        int i = 0;
+
+        while( fedamb.isRunning && i <= 19 )
         {
             // 9.1 update the attribute values of the instance //
             updateAttributeValues( objectHandle );
 
             // 9.2 send an interaction
-            sendInteraction();
+            enterShop(i);
 
             // 9.3 request a time advance and wait until we get it
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
+
+            i++;
         }
 
         //////////////////////////////////////
@@ -341,7 +336,7 @@ public class CustomerFederate
         //       remain. in that case we'll leave it for them to clean up
         try
         {
-            rtiamb.destroyFederationExecution( "CustomerFederation" );
+            rtiamb.destroyFederationExecution( "Federation" );
             log( "Destroyed Federation" );
         }
         catch( FederationExecutionDoesNotExist dne )
@@ -575,6 +570,7 @@ public class CustomerFederate
         // LRC to start delivering callbacks to the federate
         while( fedamb.isAdvancing )
         {
+            System.out.println("DKSLLKDFSJSDK");
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
     }
@@ -597,6 +593,31 @@ public class CustomerFederate
     private byte[] generateTag()
     {
         return ("(timestamp) "+System.currentTimeMillis()).getBytes();
+    }
+
+
+    private void enterShop(int customerId) throws RTIexception {
+        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterShop");
+
+        ParameterHandleValueMap parameters = getParameterHandleValueMap(customerId, interactionHandle);
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
+        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
+    }
+
+    private ParameterHandleValueMap getParameterHandleValueMap(int customerId, InteractionClassHandle interactionHandle) throws FederateNotExecutionMember, NotConnected, NameNotFound, InvalidInteractionClassHandle, RTIinternalError {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
+
+
+        HLAinteger32BE hlaCustomerId = encoderFactory.createHLAinteger32BE(customerId);
+        byte[] byteCustomerId = hlaCustomerId.toByteArray();
+
+        parameters.put(customerIdHandle, byteCustomerId);
+        return parameters;
     }
 
     //----------------------------------------------------------

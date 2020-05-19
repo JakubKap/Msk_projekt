@@ -176,7 +176,7 @@ public class StatisticsFederate
      */
     private void log( String message )
     {
-        System.out.println( "CustomerFederate   : " + message );
+        System.out.println( "StatisticsFederate   : " + message );
     }
 
     /**
@@ -231,7 +231,7 @@ public class StatisticsFederate
                     (new File("foms/ShopFom.xml")).toURI().toURL()
             };
 
-            rtiamb.createFederationExecution( "CustomerFederation", modules );
+            rtiamb.createFederationExecution( "Federation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -312,8 +312,8 @@ public class StatisticsFederate
         /////////////////////////////////////
         // 9. register an object to update //
         /////////////////////////////////////
-        ObjectInstanceHandle objectHandle = registerObject();
-        log( "Registered Object, handle=" + objectHandle );
+//        ObjectInstanceHandle objectHandle = registerObject();
+//        log( "Registered Object, handle=" + objectHandle );
 
         /////////////////////////////////////
         // 10. do the main simulation loop //
@@ -324,10 +324,10 @@ public class StatisticsFederate
         while( fedamb.isRunning )
         {
             // 9.1 update the attribute values of the instance //
-            updateAttributeValues( objectHandle );
+//            updateAttributeValues( objectHandle );
 
             // 9.2 send an interaction
-            sendInteraction();
+//            sendInteraction();
 
             // 9.3 request a time advance and wait until we get it
             advanceTime( 1.0 );
@@ -337,8 +337,8 @@ public class StatisticsFederate
         //////////////////////////////////////
         // 11. delete the object we created //
         //////////////////////////////////////
-        deleteObject( objectHandle );
-        log( "Deleted Object, handle=" + objectHandle );
+//        deleteObject( objectHandle );
+//        log( "Deleted Object, handle=" + objectHandle );
 
         ////////////////////////////////////
         // 12. resign from the federation //
@@ -353,7 +353,7 @@ public class StatisticsFederate
         //       remain. in that case we'll leave it for them to clean up
         try
         {
-            rtiamb.destroyFederationExecution( "CustomerFederation" );
+            rtiamb.destroyFederationExecution( "Federation" );
             log( "Destroyed Federation" );
         }
         catch( FederationExecutionDoesNotExist dne )
@@ -491,7 +491,7 @@ public class StatisticsFederate
         //////////////////////////////////////////////////////////
         // subscribe the interaction class EnterShop //
         enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
-        rtiamb.publishInteractionClass(enterShopHandle);
+        rtiamb.subscribeInteractionClass(enterShopHandle);
 
         // subscribe the interaction class EnterQueue //
         enterQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterQueue" );

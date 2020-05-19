@@ -165,7 +165,7 @@ public class ManagerFederate
      */
     private void log( String message )
     {
-        System.out.println( "CustomerFederate   : " + message );
+        System.out.println( "ManagerFederate   : " + message );
     }
 
     /**
@@ -220,7 +220,7 @@ public class ManagerFederate
                     (new File("foms/ShopFom.xml")).toURI().toURL()
             };
 
-            rtiamb.createFederationExecution( "CustomerFederation", modules );
+            rtiamb.createFederationExecution( "Federation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -342,7 +342,7 @@ public class ManagerFederate
         //       remain. in that case we'll leave it for them to clean up
         try
         {
-            rtiamb.destroyFederationExecution( "CustomerFederation" );
+            rtiamb.destroyFederationExecution( "Federation" );
             log( "Destroyed Federation" );
         }
         catch( FederationExecutionDoesNotExist dne )

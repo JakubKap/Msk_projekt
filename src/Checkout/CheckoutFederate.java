@@ -210,7 +210,7 @@ public class CheckoutFederate
                     (new File("foms/ShopFom.xml")).toURI().toURL()
             };
 
-            rtiamb.createFederationExecution( "CustomerFederation", modules );
+            rtiamb.createFederationExecution( "Federation", modules );
             log( "Created Federation" );
         }
         catch( FederationExecutionAlreadyExists exists )
@@ -332,7 +332,7 @@ public class CheckoutFederate
         //       remain. in that case we'll leave it for them to clean up
         try
         {
-            rtiamb.destroyFederationExecution( "CustomerFederation" );
+            rtiamb.destroyFederationExecution( "Federation" );
             log( "Destroyed Federation" );
         }
         catch( FederationExecutionDoesNotExist dne )
