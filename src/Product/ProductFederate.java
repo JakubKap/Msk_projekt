@@ -124,6 +124,8 @@ public class ProductFederate
     protected InteractionClassHandle endShoppingHandle;
     protected InteractionClassHandle enterShopHandle;
 
+    private static Random random = new Random();
+
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -285,12 +287,13 @@ public class ProductFederate
         while( fedamb.isRunning)
         {
             // 9.1 update the attribute values of the instance //
-            updateAttributeValues( objectHandle );
-
+//            updateAttributeValues( objectHandle );
+            endShopping(5);
             // 9.2 send an interaction
 
             // 9.3 request a time advance and wait until we get it
-            advanceTime( 1.0 );
+//            advanceTime( 1.0 );
+            advanceTime( random.nextInt(9) + 1 );
             log( "Time Advanced to " + fedamb.federateTime );
 
         }
@@ -520,7 +523,7 @@ public class ProductFederate
     }
 
     private void endShopping(int customerId) throws RTIexception {
-        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterShop");
+        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EndShopping");
 
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
@@ -529,7 +532,7 @@ public class ProductFederate
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
-        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
+        log("koniec kupowania: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     //----------------------------------------------------------

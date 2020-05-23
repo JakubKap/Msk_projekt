@@ -226,7 +226,7 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Interaction Received:" );
+        StringBuilder builder = new StringBuilder( "customer federate - Interaction Received:" );
 
         // print the handle
 
