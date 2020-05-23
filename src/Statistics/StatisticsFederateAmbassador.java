@@ -31,6 +31,7 @@ import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import utils.Utils;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -238,13 +239,8 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
 
         for(ParameterHandle parameter : theParameters.keySet()){
             byte[] bytes = theParameters.get(parameter);
-            HLAinteger32BE customerId = new HLA1516eInteger32BE();
-            try{
-                customerId.decode(bytes);
-            } catch(DecoderException e){
-                e.printStackTrace();
-            }
-            builder.append(" received, klientId = " + customerId.getValue());
+            int customerId = Utils.byteToInt(bytes);
+            builder.append(" received, klientId = " + customerId);
         }
 
         // print the handle
