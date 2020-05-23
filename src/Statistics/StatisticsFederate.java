@@ -501,10 +501,6 @@ public class StatisticsFederate
         enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
         rtiamb.subscribeInteractionClass(enterCheckoutHandle);
 
-        // subscribe the interaction class CreateCheckout //
-        createCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.CreateCheckout" );
-        rtiamb.subscribeInteractionClass(createCheckoutHandle);
-
         // subscribe the interaction class ServicingCustomer //
         servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
         rtiamb.subscribeInteractionClass(servicingCustomerHandle);

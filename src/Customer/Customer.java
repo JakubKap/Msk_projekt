@@ -6,10 +6,8 @@ public class Customer {
     private int valueOfProducts;
     private static int currentId = 0;
 
-    public Customer(int numberOfProductsInBasket, int valueOfProducts) {
+    public Customer() {
         this.id = currentId++;
-        this.numberOfProductsInBasket = numberOfProductsInBasket;
-        this.valueOfProducts = valueOfProducts;
     }
 
     public int getId() {

@@ -135,10 +135,10 @@ public class CustomerFederate
     private InteractionClassHandle servicingCustomerHandle;
     private InteractionClassHandle enterShopHandle;
     private InteractionClassHandle enterQueueHandle;
-    private InteractionClassHandle enterCheckoutHandle;
     private InteractionClassHandle payHandle;
     private InteractionClassHandle exitShopHandle;
-    private int customerId;
+
+    private static Random random = new Random();
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -297,21 +297,18 @@ public class CustomerFederate
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        int i = 0;
 
-        while( fedamb.isRunning && i <= 19 )
+        while( fedamb.isRunning)
         {
             // 9.1 update the attribute values of the instance //
             updateAttributeValues( objectHandle );
 
             // 9.2 send an interaction
-            enterShop(i);
+            enterShop();
 
             // 9.3 request a time advance and wait until we get it
-            advanceTime( 1.0 );
+            advanceTime( random.nextInt(9) + 1 );
             log( "Time Advanced to " + fedamb.federateTime );
-
-            i++;
         }
 
         //////////////////////////////////////
@@ -444,38 +441,33 @@ public class CustomerFederate
         rtiamb.subscribeObjectClassAttributes(checkoutHandle, checkoutAttributes);
 
         //////////////////////////////////////////////////////////
-        // subscribe the interaction class StartSimulation //
-        startSimulationHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.StartSimulation" );
-        rtiamb.subscribeInteractionClass(startSimulationHandle);
-
-        // subscribe the interaction class ServicingCustomer //
-        servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
-        rtiamb.subscribeInteractionClass(servicingCustomerHandle);
-
         // publish the interaction class EnterShop //
         enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
         rtiamb.publishInteractionClass(enterShopHandle);
-
-        // publish the interaction class EndShopping //
-        endShoppingHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EndShopping" );
-        rtiamb.publishInteractionClass(endShoppingHandle);
 
         // publish the interaction class EnterQueue //
         enterQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterQueue" );
         rtiamb.publishInteractionClass(enterQueueHandle);
 
-        // publish the interaction class EnterCheckout //
-        enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
-        rtiamb.publishInteractionClass(enterCheckoutHandle);
-
         // publish the interaction class Pay //
         payHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.Pay" );
         rtiamb.publishInteractionClass(payHandle);
 
+        // subscribe the interaction class StartSimulation //
+        startSimulationHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.StartSimulation" );
+        rtiamb.subscribeInteractionClass(startSimulationHandle);
+
+        // publish the interaction class EndShopping //
+        endShoppingHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EndShopping" );
+        rtiamb.subscribeInteractionClass(endShoppingHandle);
+
+        // subscribe the interaction class ServicingCustomer //
+        servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
+        rtiamb.subscribeInteractionClass(servicingCustomerHandle);
+
         // publish the interaction class ExitShop //
         exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
-        rtiamb.publishInteractionClass(exitShopHandle);
-
+        rtiamb.subscribeInteractionClass(exitShopHandle);
     }
 
     /**
@@ -593,15 +585,16 @@ public class CustomerFederate
     }
 
 
-    private void enterShop(int customerId) throws RTIexception {
+    private void enterShop() throws RTIexception {
         InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterShop");
 
-        ParameterHandleValueMap parameters = getParameterHandleValueMap(customerId, interactionHandle);
+        Customer customer = new Customer();
+        ParameterHandleValueMap parameters = getParameterHandleValueMap(customer.getId(), interactionHandle);
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
-        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
+        log("Dodano nowego kilenta, id: "+ customer.getId() + " time: "+ fedamb.federateTime);
     }
 
     private ParameterHandleValueMap getParameterHandleValueMap(int customerId, InteractionClassHandle interactionHandle) throws FederateNotExecutionMember, NotConnected, NameNotFound, InvalidInteractionClassHandle, RTIinternalError {
