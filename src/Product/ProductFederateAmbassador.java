@@ -21,23 +21,10 @@ import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Utils;
 
-/**
- * This class handles all incoming callbacks from the RTI regarding a particular
- * {@link Customer}. It will log information about any callbacks it
- * receives, thus demonstrating how to deal with the provided callback information.
- */
 class ProductFederateAmbassador extends NullFederateAmbassador
 {
-    //----------------------------------------------------------
-    //                    STATIC VARIABLES
-    //----------------------------------------------------------
-
-    //----------------------------------------------------------
-    //                   INSTANCE VARIABLES
-    //----------------------------------------------------------
     private ProductFederate federate;
 
-    // these variables are accessible in the package
     protected double federateTime        = 0.0;
     protected double federateLookahead   = 1.0;
 
@@ -83,16 +70,14 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     }
 
     @Override
-    public void announceSynchronizationPoint( String label, byte[] tag )
-    {
+    public void announceSynchronizationPoint( String label, byte[] tag ) {
         log( "Synchronization point announced: " + label );
         if( label.equals(ProductFederate.READY_TO_RUN) )
             this.isAnnounced = true;
     }
 
     @Override
-    public void federationSynchronized( String label, FederateHandleSet failed )
-    {
+    public void federationSynchronized( String label, FederateHandleSet failed ) {
         log( "Federation Synchronized: " + label );
         if( label.equals(ProductFederate.READY_TO_RUN) )
             this.isReadyToRun = true;
@@ -102,22 +87,19 @@ class ProductFederateAmbassador extends NullFederateAmbassador
      * The RTI has informed us that time regulation is now enabled.
      */
     @Override
-    public void timeRegulationEnabled( LogicalTime time )
-    {
+    public void timeRegulationEnabled( LogicalTime time ) {
         this.federateTime = ((HLAfloat64Time)time).getValue();
         this.isRegulating = true;
     }
 
     @Override
-    public void timeConstrainedEnabled( LogicalTime time )
-    {
+    public void timeConstrainedEnabled( LogicalTime time ) {
         this.federateTime = ((HLAfloat64Time)time).getValue();
         this.isConstrained = true;
     }
 
     @Override
-    public void timeAdvanceGrant( LogicalTime time )
-    {
+    public void timeAdvanceGrant( LogicalTime time ) {
         this.federateTime = ((HLAfloat64Time)time).getValue();
         this.isAdvancing = false;
     }
@@ -167,14 +149,10 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "Reflection for object:" );
 
-        // print the handle
         builder.append( " handle=" + theObject );
-        // print the tag
         builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
+
+        if( time != null ) {
             builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
         }
 
@@ -237,12 +215,8 @@ class ProductFederateAmbassador extends NullFederateAmbassador
             }
         }
 
-        // print the handle
-
-        // print the tag
         builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
+
         if( time != null )
         {
             builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
@@ -275,8 +249,4 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     {
         log( "Object Removed: handle=" + theObject );
     }
-
-    //----------------------------------------------------------
-    //                     STATIC METHODS
-    //----------------------------------------------------------
 }
