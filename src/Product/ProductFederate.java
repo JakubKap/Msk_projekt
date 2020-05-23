@@ -117,12 +117,12 @@ public class ProductFederate
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
-    private ObjectClassHandle customerHandle;
-    private AttributeHandle customerIdHandle;
-    private AttributeHandle numberOfProductsInBasketHandle;
-    private AttributeHandle valueOfProductsHandle;
-    private InteractionClassHandle endShoppingHandle;
-    private InteractionClassHandle enterShopHandle;
+    protected ObjectClassHandle customerHandle;
+    protected AttributeHandle customerIdHandle;
+    protected AttributeHandle numberOfProductsInBasketHandle;
+    protected AttributeHandle valueOfProductsHandle;
+    protected InteractionClassHandle endShoppingHandle;
+    protected InteractionClassHandle enterShopHandle;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -136,7 +136,7 @@ public class ProductFederate
      */
     private void log( String message )
     {
-        System.out.println( "CustomerFederate   : " + message );
+        System.out.println( "ProductFederate   : " + message );
     }
 
     /**
@@ -213,7 +213,7 @@ public class ProductFederate
         };
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
-                "customer",   // federate type
+                "product",   // federate type
                 "Federation",     // name of federation
                 joinModules );           // modules we want to add
 
@@ -281,9 +281,8 @@ public class ProductFederate
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        int i = 0;
 
-        while( fedamb.isRunning && i <= 19 )
+        while( fedamb.isRunning)
         {
             // 9.1 update the attribute values of the instance //
             updateAttributeValues( objectHandle );
@@ -294,7 +293,6 @@ public class ProductFederate
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
 
-            i++;
         }
 
         //////////////////////////////////////
@@ -540,7 +538,7 @@ public class ProductFederate
     public static void main( String[] args )
     {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "Customer";
+        String federateName = "Product";
         if( args.length != 0 )
         {
             federateName = args[0];
