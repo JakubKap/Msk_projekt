@@ -17,6 +17,7 @@ package Product;
 import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Utils;
 
@@ -219,16 +220,22 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "product federate - Interaction Received: ");
 
-//        if( interactionClass.equals(federate.enterShopHandle))
-//        {
-//            builder.append( " (EnterShop)" );
-//        }
+        if( interactionClass.equals(federate.enterShopHandle))
+        {
+            builder.append( " (EnterShop)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                builder.append(" received, klientId = " + customerId);
+            }
 
-//        for(ParameterHandle parameter : theParameters.keySet()){
-//            byte[] bytes = theParameters.get(parameter);
-//            int customerId = Utils.byteToInt(bytes);
-//            builder.append(" received, klientId = " + customerId);
-//        }
+            try {
+                federate.endShopping(customerId);
+            } catch (RTIexception rtIexception) {
+                rtIexception.printStackTrace();
+            }
+        }
 
         // print the handle
 

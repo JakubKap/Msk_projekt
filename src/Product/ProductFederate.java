@@ -288,7 +288,7 @@ public class ProductFederate
         {
             // 9.1 update the attribute values of the instance //
 //            updateAttributeValues( objectHandle );
-            endShopping(5);
+//            endShopping(5);
             // 9.2 send an interaction
 
             // 9.3 request a time advance and wait until we get it
@@ -522,7 +522,7 @@ public class ProductFederate
         return ("(timestamp) "+System.currentTimeMillis()).getBytes();
     }
 
-    private void endShopping(int customerId) throws RTIexception {
+    protected void endShopping(int customerId) throws RTIexception {
         InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EndShopping");
 
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
