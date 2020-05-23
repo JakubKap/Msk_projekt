@@ -27,7 +27,9 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
+import utils.Utils;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -43,7 +45,7 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private CustomerFederate customerFederate;
+    private CustomerFederate federate;
 
     // these variables are accessible in the package
     protected double federateTime        = 0.0;
@@ -63,7 +65,7 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
 
     public CustomerFederateAmbassador( CustomerFederate customerFederate)
     {
-        this.customerFederate = customerFederate;
+        this.federate = customerFederate;
     }
 
     //----------------------------------------------------------
@@ -227,6 +229,17 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
             throws FederateInternalError
     {
         StringBuilder builder = new StringBuilder( "Interaction Received:" );
+
+        if( interactionClass.equals(federate.endShoppingHandle))
+        {
+            builder.append( " (EndShopping)" );
+        }
+
+        for(ParameterHandle parameter : theParameters.keySet()){
+            byte[] bytes = theParameters.get(parameter);
+            int customerId = Utils.byteToInt(bytes);
+            builder.append(" received, klientId = " + customerId);
+        }
 
         // print the handle
 

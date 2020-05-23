@@ -519,8 +519,8 @@ public class ProductFederate
         return ("(timestamp) "+System.currentTimeMillis()).getBytes();
     }
 
-    private void endShopping(int customerId) throws RTIexception {
-        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterShop");
+    protected void endShopping(int customerId) throws RTIexception {
+        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EndShopping");
 
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
