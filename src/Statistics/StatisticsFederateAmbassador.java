@@ -26,8 +26,11 @@ import hla.rti1516e.ParameterHandle;
 import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
+import hla.rti1516e.encoding.DecoderException;
+import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -43,7 +46,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private StatisticsFederate statisticsFederate;
+    private StatisticsFederate federate;
 
     // these variables are accessible in the package
     protected double federateTime        = 0.0;
@@ -63,7 +66,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
 
     public StatisticsFederateAmbassador( StatisticsFederate managerFederate)
     {
-        this.statisticsFederate = managerFederate;
+        this.federate = managerFederate;
     }
 
     //----------------------------------------------------------
@@ -226,7 +229,23 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Interaction Received:" );
+        StringBuilder builder = new StringBuilder( "Interaction ");
+
+        if( interactionClass.equals(federate.enterShopHandle) )
+        {
+            builder.append( " (EnterShop)" );
+        }
+
+        for(ParameterHandle parameter : theParameters.keySet()){
+            byte[] bytes = theParameters.get(parameter);
+            HLAinteger32BE customerId = new HLA1516eInteger32BE();
+            try{
+                customerId.decode(bytes);
+            } catch(DecoderException e){
+                e.printStackTrace();
+            }
+            builder.append(" received, klientId = " + customerId.getValue());
+        }
 
         // print the handle
 

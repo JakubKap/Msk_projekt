@@ -156,13 +156,13 @@ public class StatisticsFederate
     private AttributeHandle percentOfPrivilegedCheckoutsHandle;
     private AttributeHandle avgNumberOfClientsInQueueHandle;
 
-    private InteractionClassHandle enterQueueHandle;
-    private InteractionClassHandle enterCheckoutHandle;
-    private InteractionClassHandle createCheckoutHandle;
-    private InteractionClassHandle enterShopHandle;
-    private InteractionClassHandle servicingCustomerHandle;
-    private InteractionClassHandle payHandle;
-    private InteractionClassHandle exitShopHandle;
+    protected InteractionClassHandle enterQueueHandle;
+    protected InteractionClassHandle enterCheckoutHandle;
+    protected InteractionClassHandle createCheckoutHandle;
+    protected InteractionClassHandle enterShopHandle;
+    protected InteractionClassHandle servicingCustomerHandle;
+    protected InteractionClassHandle payHandle;
+    protected InteractionClassHandle exitShopHandle;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
