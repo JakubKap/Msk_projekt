@@ -14,9 +14,6 @@
  */
 package Customer;
 
-import hla.rti.LogicalTime;
-import hla.rti.SuppliedParameters;
-import hla.rti.jlc.EncodingHelpers;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
