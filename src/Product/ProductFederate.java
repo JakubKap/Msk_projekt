@@ -14,6 +14,7 @@
  */
 package Product;
 
+import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
@@ -22,6 +23,7 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -517,6 +519,19 @@ public class ProductFederate
     private byte[] generateTag()
     {
         return ("(timestamp) "+System.currentTimeMillis()).getBytes();
+    }
+
+    private void endShopping(int customerId) throws RTIexception {
+        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterShop");
+
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory ,customerId));
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
+        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     //----------------------------------------------------------
