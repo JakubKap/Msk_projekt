@@ -10,17 +10,17 @@ import hla.rti1516e.exceptions.RTIexception;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RtiObjectClassHandle extends RtiClassHandle {
+public class RtiObjectClassHandleWrapper extends RtiClassHandle {
     private ObjectClassHandle handle;
-    private List<RtiAttributeHandle> attributes = new ArrayList<>();
+    private List<RtiAttributeHandleWrapper> attributes = new ArrayList<>();
 
-    public RtiObjectClassHandle(RTIambassador rtiamb, String handleString) throws RTIexception {
+    public RtiObjectClassHandleWrapper(RTIambassador rtiamb, String handleString) throws RTIexception {
         super(rtiamb, handleString);
         this.handle = rtiamb.getObjectClassHandle(handleString);
     }
 
     public void addAttribute(String attributeString) throws RTIexception {
-        attributes.add(new RtiAttributeHandle(rtiamb, handle, attributeString));
+        attributes.add(new RtiAttributeHandleWrapper(rtiamb, handle, attributeString));
     }
 
     public void addAttributes(String... attributes) throws RTIexception {
@@ -41,7 +41,7 @@ public class RtiObjectClassHandle extends RtiClassHandle {
 
     private AttributeHandleSet attributeToHandleSet() throws FederateNotExecutionMember, NotConnected {
         AttributeHandleSet attributeHandleSet = rtiamb.getAttributeHandleSetFactory().create();
-        for (RtiAttributeHandle attribute : attributes) {
+        for (RtiAttributeHandleWrapper attribute : attributes) {
             attributeHandleSet.add(attribute.getHandle());
         }
         return attributeHandleSet;

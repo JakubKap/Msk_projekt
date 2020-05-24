@@ -4,10 +4,10 @@ import hla.rti1516e.InteractionClassHandle;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.exceptions.RTIexception;
 
-public class RtiInteractionClassHandle extends RtiClassHandle{
+public class RtiInteractionClassHandleWrapper extends RtiClassHandle{
     private InteractionClassHandle handle;
 
-    public RtiInteractionClassHandle(RTIambassador rtiamb, String handleString) throws RTIexception {
+    public RtiInteractionClassHandleWrapper(RTIambassador rtiamb, String handleString) throws RTIexception {
         super(rtiamb, handleString);
         this.handle = rtiamb.getInteractionClassHandle( handleString );
     }

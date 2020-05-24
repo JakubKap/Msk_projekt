@@ -14,7 +14,6 @@
  */
 package Product;
 
-import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
@@ -198,7 +197,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "product federate - Interaction Received: ");
 
-        if( interactionClass.equals(federate.enterShopHandle.getHandle()))
+        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()))
         {
             builder.append( " (EnterShop)" );
             int customerId = 0;
@@ -206,12 +205,6 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
                 builder.append(" received, klientId = " + customerId);
-            }
-
-            try {
-                federate.endShopping(customerId);
-            } catch (RTIexception rtIexception) {
-                rtIexception.printStackTrace();
             }
         }
 

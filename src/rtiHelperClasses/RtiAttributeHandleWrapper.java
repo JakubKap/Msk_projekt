@@ -5,11 +5,11 @@ import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.exceptions.RTIexception;
 
-public class RtiAttributeHandle {
+public class RtiAttributeHandleWrapper {
     private AttributeHandle handle;
     private String handleString;
 
-    public RtiAttributeHandle(RTIambassador rtiamb, ObjectClassHandle objectHandle, String handleString) throws RTIexception {
+    public RtiAttributeHandleWrapper(RTIambassador rtiamb, ObjectClassHandle objectHandle, String handleString) throws RTIexception {
         this.handle = rtiamb.getAttributeHandle( objectHandle, handleString );
         this.handleString = handleString;
     }
