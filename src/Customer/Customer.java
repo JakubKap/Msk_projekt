@@ -4,6 +4,7 @@ public class Customer {
     private int id;
     private int numberOfProductsInBasket;
     private int valueOfProducts;
+    private boolean endShopping;
     private static int currentId = 0;
 
     public Customer() {
@@ -32,5 +33,13 @@ public class Customer {
 
     public void setValueOfProducts(int valueOfProducts) {
         this.valueOfProducts = valueOfProducts;
+    }
+
+    public boolean isEndedShopping() {
+        return endShopping;
+    }
+
+    public void setEndShopping(boolean endShopping) {
+        this.endShopping = endShopping;
     }
 }

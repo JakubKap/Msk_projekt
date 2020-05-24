@@ -22,6 +22,8 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import rtiHelperClasses.RtiHelper;
+import rtiHelperClasses.RtiObjectClassHandle;
 import utils.Utils;
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,6 +44,7 @@ public class ProductFederate
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
+    private RtiHelper rtiHelper = new RtiHelper(rtiamb);
     private ProductFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
@@ -73,7 +76,7 @@ public class ProductFederate
 
         while( fedamb.isRunning) {
 //            updateAttributeValues( objectHandle );
-//            endShopping(5);
+            endShopping(5);
 //            advanceTime( 1.0 );
             advanceTime( random.nextInt(9) + 1 );
         }
@@ -85,30 +88,36 @@ public class ProductFederate
 
     private void publishAndSubscribe() throws RTIexception
     {
-        // get all the handle information for the attributes of customer
-        this.customerHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Customer");
-        this.customerIdHandle = rtiamb.getAttributeHandle( customerHandle, "id" );
-        this.numberOfProductsInBasketHandle = rtiamb.getAttributeHandle( customerHandle, "numberOfProductsInBasket" );
-        this.valueOfProductsHandle = rtiamb.getAttributeHandle( customerHandle, "valueOfProducts" );
+        rtiHelper.addInteraction("HLAinteractionRoot.EndShopping").publish();
+        rtiHelper.addInteraction("HLAinteractionRoot.EnterShop").subscribe();
 
-        // package the information into a handle set
-        AttributeHandleSet customerAttributes = rtiamb.getAttributeHandleSetFactory().create();
-        customerAttributes.add( customerIdHandle );
-        customerAttributes.add( numberOfProductsInBasketHandle );
-        customerAttributes.add( valueOfProductsHandle );
-
-        // do the customerHandle publication
-        rtiamb.publishObjectClassAttributes( customerHandle, customerAttributes );
-
-        //////////////////////////////////////////////////////////
-
-        // publish the interaction class EndShopping //
-        this.endShoppingHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EndShopping" );
-        rtiamb.publishInteractionClass(endShoppingHandle);
-
-        // publish the interaction class EnterShop //
-        this.enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
-        rtiamb.subscribeInteractionClass(enterShopHandle);
+        RtiObjectClassHandle customerHandle = rtiHelper.addObject("HLAobjectRoot.Customer");
+        customerHandle.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
+        customerHandle.publish();
+//        // get all the handle information for the attributes of customer
+//        this.customerHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Customer");
+//        this.customerIdHandle = rtiamb.getAttributeHandle( customerHandle, "id" );
+//        this.numberOfProductsInBasketHandle = rtiamb.getAttributeHandle( customerHandle, "numberOfProductsInBasket" );
+//        this.valueOfProductsHandle = rtiamb.getAttributeHandle( customerHandle, "valueOfProducts" );
+//
+//        // package the information into a handle set
+//        AttributeHandleSet customerAttributes = rtiamb.getAttributeHandleSetFactory().create();
+//        customerAttributes.add( customerIdHandle );
+//        customerAttributes.add( numberOfProductsInBasketHandle );
+//        customerAttributes.add( valueOfProductsHandle );
+//
+//        // do the customerHandle publication
+//        rtiamb.publishObjectClassAttributes( customerHandle, customerAttributes );
+//
+//        //////////////////////////////////////////////////////////
+//
+//        // publish the interaction class EndShopping //
+//        this.endShoppingHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EndShopping" );
+//        rtiamb.publishInteractionClass(endShoppingHandle);
+//
+//        // publish the interaction class EnterShop //
+//        this.enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
+//        rtiamb.subscribeInteractionClass(enterShopHandle);
         log( "Published and Subscribed" );
     }
 
@@ -217,7 +226,7 @@ public class ProductFederate
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
                 "product",   // federate type
-                "Federation",     // name of federation
+                "nameOfFederation",     // name of federation
                 joinModules );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
