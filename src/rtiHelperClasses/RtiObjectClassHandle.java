@@ -20,7 +20,7 @@ public class RtiObjectClassHandle extends RtiClassHandle {
     }
 
     public void addAttribute(String attributeString) throws RTIexception {
-        attributes.add(new RtiAttributeHandle(attributeString));
+        attributes.add(new RtiAttributeHandle(rtiamb, handle, attributeString));
     }
 
     public void addAttributes(String... attributes) throws RTIexception {
@@ -45,5 +45,9 @@ public class RtiObjectClassHandle extends RtiClassHandle {
             attributeHandleSet.add(attribute.getHandle());
         }
         return attributeHandleSet;
+    }
+
+    public ObjectClassHandle getHandle() {
+        return handle;
     }
 }

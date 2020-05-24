@@ -22,7 +22,7 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
-import rtiHelperClasses.RtiHelper;
+import rtiHelperClasses.RtiInteractionClassHandle;
 import rtiHelperClasses.RtiObjectClassHandle;
 import utils.Utils;
 import java.io.BufferedReader;
@@ -44,17 +44,13 @@ public class ProductFederate
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private RtiHelper rtiHelper = new RtiHelper(rtiamb);
     private ProductFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
-    protected ObjectClassHandle customerHandle;
-    protected AttributeHandle customerIdHandle;
-    protected AttributeHandle numberOfProductsInBasketHandle;
-    protected AttributeHandle valueOfProductsHandle;
-    protected InteractionClassHandle endShoppingHandle;
-    protected InteractionClassHandle enterShopHandle;
+    protected RtiInteractionClassHandle endShoppingHandle;
+    protected RtiInteractionClassHandle enterShopHandle;
+    protected RtiObjectClassHandle customerHandle;
 
     private static Random random = new Random();
 
@@ -63,7 +59,7 @@ public class ProductFederate
     ///////////////////////////////////////////////////////////////////////////
     public void runFederate( String federateName ) throws Exception
     {
-        if (createRTIAndFederation(federateName)) return;
+        if (createRTIAndFederation(federateName, "product", "Federation")) return;
         this.timeFactory = (HLAfloat64TimeFactory)rtiamb.getTimeFactory();
         rtiamb.registerFederationSynchronizationPoint( READY_TO_RUN, null );
         evokeMultipleCallbacksIfNotAnnounced();
@@ -88,41 +84,22 @@ public class ProductFederate
 
     private void publishAndSubscribe() throws RTIexception
     {
-        rtiHelper.addInteraction("HLAinteractionRoot.EndShopping").publish();
-        rtiHelper.addInteraction("HLAinteractionRoot.EnterShop").subscribe();
+        this.endShoppingHandle = new RtiInteractionClassHandle(this.rtiamb, "HLAinteractionRoot.EndShopping");
+        this.enterShopHandle = new RtiInteractionClassHandle(this.rtiamb, "HLAinteractionRoot.EnterShop");
+        this.endShoppingHandle.publish();
+        this.enterShopHandle.subscribe();
 
-        RtiObjectClassHandle customerHandle = rtiHelper.addObject("HLAobjectRoot.Customer");
+        this.customerHandle = new RtiObjectClassHandle(rtiamb, "HLAobjectRoot.Customer");
         customerHandle.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
         customerHandle.publish();
-//        // get all the handle information for the attributes of customer
-//        this.customerHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Customer");
-//        this.customerIdHandle = rtiamb.getAttributeHandle( customerHandle, "id" );
-//        this.numberOfProductsInBasketHandle = rtiamb.getAttributeHandle( customerHandle, "numberOfProductsInBasket" );
-//        this.valueOfProductsHandle = rtiamb.getAttributeHandle( customerHandle, "valueOfProducts" );
-//
-//        // package the information into a handle set
-//        AttributeHandleSet customerAttributes = rtiamb.getAttributeHandleSetFactory().create();
-//        customerAttributes.add( customerIdHandle );
-//        customerAttributes.add( numberOfProductsInBasketHandle );
-//        customerAttributes.add( valueOfProductsHandle );
-//
-//        // do the customerHandle publication
-//        rtiamb.publishObjectClassAttributes( customerHandle, customerAttributes );
-//
-//        //////////////////////////////////////////////////////////
-//
-//        // publish the interaction class EndShopping //
-//        this.endShoppingHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EndShopping" );
-//        rtiamb.publishInteractionClass(endShoppingHandle);
-//
-//        // publish the interaction class EnterShop //
-//        this.enterShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterShop" );
-//        rtiamb.subscribeInteractionClass(enterShopHandle);
+
         log( "Published and Subscribed" );
     }
 
-    private ObjectInstanceHandle registerObject() throws RTIexception {
-        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(customerHandle);
+    private ObjectInstanceHandle registerObject() throws RTIexception, ClassNotFoundException {
+        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(
+                rtiamb.getObjectClassHandle("HLAobjectRoot.Customer")
+        );
         log( "Registered Object, handle=" + objectInstanceHandle );
         return objectInstanceHandle;
     }
@@ -181,7 +158,7 @@ public class ProductFederate
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
 
-    private boolean createRTIAndFederation(String federateName) throws Exception {
+    private boolean createRTIAndFederation(String federateName, String federateType, String nameOfFederation) throws Exception {
         /////////////////////////////////////////////////
         // 1 & 2. create the RTIambassador and Connect //
         /////////////////////////////////////////////////
@@ -225,8 +202,8 @@ public class ProductFederate
         };
 
         rtiamb.joinFederationExecution( federateName,            // name for the federate
-                "product",   // federate type
-                "nameOfFederation",     // name of federation
+                federateType,   // federate type
+                nameOfFederation,     // name of federation
                 joinModules );           // modules we want to add
 
         log( "Joined Federation as " + federateName );
@@ -303,7 +280,7 @@ public class ProductFederate
         }
     }
 
-    private void synchronizationPointAchieved() throws SynchronizationPointLabelNotAnnounced, SaveInProgress, RestoreInProgress, FederateNotExecutionMember, NotConnected, RTIinternalError {
+    private void synchronizationPointAchieved() throws RTIexception {
         rtiamb.synchronizationPointAchieved( READY_TO_RUN );
         log( "Achieved sync point: " +READY_TO_RUN+ ", waiting for federation..." );
     }

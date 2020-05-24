@@ -198,7 +198,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "product federate - Interaction Received: ");
 
-        if( interactionClass.equals(federate.enterShopHandle))
+        if( interactionClass.equals(federate.enterShopHandle.getHandle()))
         {
             builder.append( " (EnterShop)" );
             int customerId = 0;

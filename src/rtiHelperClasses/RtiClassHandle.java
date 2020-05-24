@@ -18,4 +18,8 @@ public abstract class RtiClassHandle {
         publish();
         subscribe();
     }
+
+    public String getHandleString() {
+        return handleString;
+    }
 }

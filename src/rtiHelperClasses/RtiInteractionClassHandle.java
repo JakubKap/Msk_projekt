@@ -21,4 +21,8 @@ public class RtiInteractionClassHandle extends RtiClassHandle{
     public void publish() throws RTIexception {
         rtiamb.publishInteractionClass(handle);
     }
+
+    public InteractionClassHandle getHandle() {
+        return handle;
+    }
 }
