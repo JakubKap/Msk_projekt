@@ -14,7 +14,6 @@
  */
 package Product;
 
-import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
@@ -23,6 +22,7 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import utils.Event;
 import utils.Utils;
 
 import java.io.BufferedReader;
@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -123,6 +124,10 @@ public class ProductFederate
     protected AttributeHandle valueOfProductsHandle;
     protected InteractionClassHandle endShoppingHandle;
     protected InteractionClassHandle enterShopHandle;
+
+    public LinkedList<Event> eventList = new LinkedList<>();
+
+    private static Random random = new Random();
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -285,12 +290,29 @@ public class ProductFederate
         while( fedamb.isRunning)
         {
             // 9.1 update the attribute values of the instance //
-            updateAttributeValues( objectHandle );
-
+//            updateAttributeValues( objectHandle );
+//            endShopping(5);
             // 9.2 send an interaction
+            Event event = null;
+            if (!eventList.isEmpty()) {
+                event = eventList.getFirst();
+            }
+
+            if (event != null && event.getInteractionClassHandle().equals(this.enterShopHandle)) {
+                int customerId = 0;
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    endShopping(customerId);
+                }
+                eventList.removeFirst();
+            }
 
             // 9.3 request a time advance and wait until we get it
-            advanceTime( 1.0 );
+//            advanceTime( 1.0 );
+            advanceTime( random.nextInt(9) + 1 );
+            // jesli wartosc zmiennej ustawiona to wyslij odpowiednia interakcje
             log( "Time Advanced to " + fedamb.federateTime );
 
         }
@@ -524,12 +546,12 @@ public class ProductFederate
 
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
-        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory ,customerId));
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
-        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
+        log("koniec kupowania: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     //----------------------------------------------------------

@@ -22,12 +22,15 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import utils.Event;
+import utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -137,6 +140,8 @@ public class CustomerFederate
     protected InteractionClassHandle enterQueueHandle;
     protected InteractionClassHandle payHandle;
     protected InteractionClassHandle exitShopHandle;
+
+    public LinkedList<Event> eventList = new LinkedList<>();
 
     private static Random random = new Random();
 
@@ -301,10 +306,26 @@ public class CustomerFederate
         while( fedamb.isRunning)
         {
             // 9.1 update the attribute values of the instance //
-//            updateAttributeValues( objectHandle );
+            updateAttributeValues( objectHandle );
 
             // 9.2 send an interaction
             enterShop();
+
+            Event event = null;
+            if (!eventList.isEmpty()) {
+                event = eventList.getFirst();
+            }
+
+            if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandle)) {
+                int customerId = 0;
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    enterQueue(customerId);
+                }
+                eventList.removeFirst();
+            }
 
             // 9.3 request a time advance and wait until we get it
             advanceTime( random.nextInt(9) + 1 );
@@ -341,6 +362,19 @@ public class CustomerFederate
         {
             log( "Didn't destroy federation, federates still joined" );
         }
+    }
+
+    private void enterQueue(int customerId) throws RTIexception {
+        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterQueue");
+
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
+        log("wejście do kolejki: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////

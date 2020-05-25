@@ -27,8 +27,8 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
-import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
+import utils.Event;
 import utils.Utils;
 
 /**
@@ -63,9 +63,9 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
     //                      CONSTRUCTORS
     //----------------------------------------------------------
 
-    public CustomerFederateAmbassador( CustomerFederate customerFederate)
+    public CustomerFederateAmbassador( CustomerFederate federate)
     {
-        this.federate = customerFederate;
+        this.federate = federate;
     }
 
     //----------------------------------------------------------
@@ -232,13 +232,15 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
 
         if( interactionClass.equals(federate.endShoppingHandle))
         {
-            builder.append( " (EndShopping)" );
-        }
+            builder.append( " (EndShop)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                builder.append(" received, klientId = " + customerId);
+            }
 
-        for(ParameterHandle parameter : theParameters.keySet()){
-            byte[] bytes = theParameters.get(parameter);
-            int customerId = Utils.byteToInt(bytes);
-            builder.append(" received, klientId = " + customerId);
+            federate.eventList.add(new Event(interactionClass, theParameters));
         }
 
         // print the handle

@@ -134,23 +134,23 @@ public class QueueFederate
 //    protected AttributeHandle flavHandle;
 //    protected InteractionClassHandle servedHandle;
 
-    private ObjectClassHandle customerHandle;
-    private ObjectClassHandle queueHandle;
-    private ObjectClassHandle checkoutHandle;
-    private AttributeHandle customerIdHandle;
-    private AttributeHandle numberOfProductsInBasketHandle;
-    private AttributeHandle valueOfProductsHandle;
-    private AttributeHandle queueIdHandle;
-    private AttributeHandle maxLimitHandle;
-    private AttributeHandle customerListIdsHandle;
-    private AttributeHandle checkoutIdRefHandle;
-    private AttributeHandle checkoutIdHandle;
-    private AttributeHandle isPrivilegedHandle;
-    private AttributeHandle isFreeHandle;
+    protected ObjectClassHandle customerHandle;
+    protected ObjectClassHandle queueHandle;
+    protected ObjectClassHandle checkoutHandle;
+    protected AttributeHandle customerIdHandle;
+    protected AttributeHandle numberOfProductsInBasketHandle;
+    protected AttributeHandle valueOfProductsHandle;
+    protected AttributeHandle queueIdHandle;
+    protected AttributeHandle maxLimitHandle;
+    protected AttributeHandle customerListIdsHandle;
+    protected AttributeHandle checkoutIdRefHandle;
+    protected AttributeHandle checkoutIdHandle;
+    protected AttributeHandle isPrivilegedHandle;
+    protected AttributeHandle isFreeHandle;
 
-    private InteractionClassHandle enterQueueHandle;
-    private InteractionClassHandle enterCheckoutHandle;
-    private InteractionClassHandle createCheckoutHandle;
+    protected InteractionClassHandle enterQueueHandle;
+    protected InteractionClassHandle enterCheckoutHandle;
+    protected InteractionClassHandle createCheckoutHandle;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -454,10 +454,6 @@ public class QueueFederate
         rtiamb.subscribeObjectClassAttributes(checkoutHandle, checkoutAttributes);
 
         //////////////////////////////////////////////////////////
-        // publish the interaction class CreateCheckout //
-        createCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.CreateCheckout" );
-        rtiamb.publishInteractionClass(createCheckoutHandle);
-
         // subscribe the interaction class EnterQueue //
         enterQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterQueue" );
         rtiamb.subscribeInteractionClass(enterQueueHandle);

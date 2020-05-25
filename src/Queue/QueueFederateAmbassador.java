@@ -28,6 +28,8 @@ import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import utils.Event;
+import utils.Utils;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -43,7 +45,7 @@ class QueueFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private QueueFederate queueFederate;
+    private QueueFederate federate;
 
     // these variables are accessible in the package
     protected double federateTime        = 0.0;
@@ -61,9 +63,9 @@ class QueueFederateAmbassador extends NullFederateAmbassador
     //                      CONSTRUCTORS
     //----------------------------------------------------------
 
-    public QueueFederateAmbassador( QueueFederate managerFederate)
+    public QueueFederateAmbassador( QueueFederate federate)
     {
-        this.queueFederate = managerFederate;
+        this.federate = federate;
     }
 
     //----------------------------------------------------------
@@ -227,6 +229,17 @@ class QueueFederateAmbassador extends NullFederateAmbassador
             throws FederateInternalError
     {
         StringBuilder builder = new StringBuilder( "Interaction Received:" );
+
+        if( interactionClass.equals(federate.enterQueueHandle))
+        {
+            builder.append( " (EnterQueue)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                builder.append(" received, klientId = " + customerId);
+            }
+        }
 
         // print the handle
 
