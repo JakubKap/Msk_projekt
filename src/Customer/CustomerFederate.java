@@ -131,12 +131,12 @@ public class CustomerFederate
     protected AttributeHandle isFreeHandle;
 
     protected InteractionClassHandle startSimulationHandle;
-    private InteractionClassHandle endShoppingHandle;
-    private InteractionClassHandle servicingCustomerHandle;
-    private InteractionClassHandle enterShopHandle;
-    private InteractionClassHandle enterQueueHandle;
-    private InteractionClassHandle payHandle;
-    private InteractionClassHandle exitShopHandle;
+    protected InteractionClassHandle endShoppingHandle;
+    protected InteractionClassHandle servicingCustomerHandle;
+    protected InteractionClassHandle enterShopHandle;
+    protected InteractionClassHandle enterQueueHandle;
+    protected InteractionClassHandle payHandle;
+    protected InteractionClassHandle exitShopHandle;
 
     private static Random random = new Random();
 
