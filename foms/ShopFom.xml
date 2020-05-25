@@ -299,6 +299,13 @@
     			</parameter>
     		</interactionClass>
     		<interactionClass>
+    			<name>CreateCheckout</name>
+    			<sharing>PublishSubscribe</sharing>
+    			<transportation>HLAreliable</transportation>
+    			<order>TimeStamp</order>
+    			<semantics>Zdarzenie dodania nowej kasy</semantics>
+    		</interactionClass>
+    		<interactionClass>
     			<name>EnterCheckout</name>
     			<sharing>PublishSubscribe</sharing>
     			<transportation>HLAreliable</transportation>
