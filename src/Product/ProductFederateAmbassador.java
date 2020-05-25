@@ -18,12 +18,8 @@ import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import utils.Event;
 import utils.Utils;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular

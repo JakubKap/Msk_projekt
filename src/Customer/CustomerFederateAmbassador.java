@@ -28,6 +28,7 @@ import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import utils.Event;
 import utils.Utils;
 
 /**
@@ -238,6 +239,8 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                 customerId = Utils.byteToInt(bytes);
                 builder.append(" received, klientId = " + customerId);
             }
+
+            federate.eventList.add(new Event(interactionClass, theParameters));
         }
 
         // print the handle
