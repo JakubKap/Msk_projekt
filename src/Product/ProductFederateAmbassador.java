@@ -109,7 +109,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                                         String objectName )
             throws FederateInternalError
     {
-        log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
+        log( "ProductAmbassador - Discoverd Object: handle=" + theObject + ", classHandle=" +
                 theObjectClass + ", name=" + objectName );
     }
 

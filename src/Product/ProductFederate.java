@@ -80,11 +80,10 @@ public class ProductFederate {
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-        ObjectInstanceHandle objectHandle = registerObject();
+//        ObjectInstanceHandle objectHandle = registerObject();
 
         while (fedamb.isRunning) {
-//            updateAttributeValues( objectHandle );
-//            endShopping(5);
+
             Event event = null;
             if (!eventList.isEmpty()) {
                 event = eventList.getFirst();
@@ -103,11 +102,9 @@ public class ProductFederate {
 
 //            advanceTime( 1.0 );
             advanceTime( random.nextInt(9) + 1 );
-            // jesli wartosc zmiennej ustawiona to wyslij odpowiednia interakcje
-            log( "Time Advanced to " + fedamb.federateTime );
         }
 
-        deleteObject(objectHandle);
+//        deleteObject(objectHandle);
         resignFederation();
         destroyFederation();
     }
@@ -120,7 +117,7 @@ public class ProductFederate {
 
         this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
         customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
-        customerHandleWrapper.publish();
+        customerHandleWrapper.subscribe();
 
         log("Published and Subscribed");
     }
