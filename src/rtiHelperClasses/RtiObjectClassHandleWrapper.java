@@ -1,5 +1,6 @@
 package rtiHelperClasses;
 
+import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleSet;
 import hla.rti1516e.ObjectClassHandle;
 import hla.rti1516e.RTIambassador;
@@ -27,6 +28,10 @@ public class RtiObjectClassHandleWrapper extends RtiClassHandle {
         for (String attribute : attributes) {
             addAttribute(attribute);
         }
+    }
+
+    public AttributeHandle getAttribute(String attributeHandle) throws RTIexception {
+        return rtiamb.getAttributeHandle(handle, attributeHandle);
     }
 
     @Override

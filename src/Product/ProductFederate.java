@@ -80,11 +80,10 @@ public class ProductFederate {
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-        ObjectInstanceHandle objectHandle = registerObject();
+//        ObjectInstanceHandle objectHandle = registerObject();
 
         while (fedamb.isRunning) {
-//            updateAttributeValues( objectHandle );
-//            endShopping(5);
+
             Event event = null;
             if (!eventList.isEmpty()) {
                 event = eventList.getFirst();
@@ -103,11 +102,9 @@ public class ProductFederate {
 
 //            advanceTime( 1.0 );
             advanceTime( random.nextInt(9) + 1 );
-            // jesli wartosc zmiennej ustawiona to wyslij odpowiednia interakcje
-            log( "Time Advanced to " + fedamb.federateTime );
         }
 
-        deleteObject(objectHandle);
+//        deleteObject(objectHandle);
         resignFederation();
         destroyFederation();
     }
@@ -120,7 +117,7 @@ public class ProductFederate {
 
         this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
         customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
-        customerHandleWrapper.publish();
+        customerHandleWrapper.subscribe();
 
         log("Published and Subscribed");
     }
@@ -151,6 +148,8 @@ public class ProductFederate {
         int randomValue = 101 + new Random().nextInt(3);
         HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE(randomValue);
 //        attributes.put( flavHandle, flavValue.toByteArray() );
+        byte[] numberOfProductsInBasket = Utils.intToByte(encoderFactory, 3);
+        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasket);
 
         //////////////////////////
         // do the actual update //
@@ -274,7 +273,6 @@ public class ProductFederate {
         // wait for the time advance to be granted. ticking will tell the
         // LRC to start delivering callbacks to the federate
         while (fedamb.isAdvancing) {
-            System.out.println("DKSLLKDFSJSDK");
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 

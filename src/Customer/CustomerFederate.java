@@ -26,16 +26,14 @@ import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
 import utils.Utils;
 import utils.Event;
-import utils.Utils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 @SuppressWarnings("Duplicates")
@@ -65,6 +63,7 @@ public class CustomerFederate
     public LinkedList<Event> eventList = new LinkedList<>();
     private static Random random = new Random();
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
+    private List<Customer> customers = new ArrayList<>();
 
     //----------------------------------------------------------
     //                    INSTANCE METHODS
@@ -89,40 +88,40 @@ public class CustomerFederate
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-        ObjectInstanceHandle objectHandle = registerObject();
 
         while( fedamb.isRunning)
         {
-            // 9.1 update the attribute values of the instance //
-            updateAttributeValues( objectHandle );
+            Customer customer = createCustomer();
+//            updateAttributeValues( objectHandle );
 
-            // 9.2 send an interaction
-            enterShop();
+            enterShop(customer.getId());
+//
+            something();
 
-            Event event = null;
-            if (!eventList.isEmpty()) {
-                event = eventList.getFirst();
-            }
-
-            if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
-                int customerId = 0;
-                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                    byte[] bytes = parameterHandleValueMap.get(parameter);
-                    customerId = Utils.byteToInt(bytes);
-                    enterQueue(customerId);
-                }
-                eventList.removeFirst();
-            }
-
-            // 9.3 request a time advance and wait until we get it
             advanceTime( random.nextInt(9) + 1 );
-            log( "Time Advanced to " + fedamb.federateTime );
         }
 
-        deleteObject(objectHandle);
+        deleteObject();
         resignFederation();
         destroyFederation();
+    }
+
+    private void something() throws RTIexception {
+        Event event = null;
+        if (!eventList.isEmpty()) {
+            event = eventList.getFirst();
+        }
+
+        if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
+            int customerId = 0;
+            ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+            for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                byte[] bytes = parameterHandleValueMap.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                enterQueue(customerId);
+            }
+            eventList.removeFirst();
+        }
     }
 
     private void publishAndSubscribe() throws RTIexception {
@@ -166,6 +165,14 @@ public class CustomerFederate
         return objectInstanceHandle;
     }
 
+    private Customer createCustomer() throws RTIexception {
+        Customer customer = new Customer();
+        customers.add(customer);
+        ObjectInstanceHandle customerInstanceHandler = registerObject();
+        customer.setHandler(customerInstanceHandler);
+        return customer;
+    }
+
     private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception {
         ///////////////////////////////////////////////
         // create the necessary container and values //
@@ -198,14 +205,14 @@ public class CustomerFederate
         rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
     }
 
-    private void deleteObject( ObjectInstanceHandle handle ) throws RTIexception {
-        rtiamb.deleteObjectInstance( handle, generateTag() );
-        log( "Deleted Object, handle=" + handle );
+    private void deleteObject() throws RTIexception {
+        for (Customer customer : customers) {
+            rtiamb.deleteObjectInstance(customer.getHandler(), generateTag());
+            log( "Deleted Object, handle=" + customer.getHandler() );
+        }
     }
 
-    private void enterShop() throws RTIexception {
-        Customer customer = new Customer();
-        int customerId = customer.getId();
+    private void enterShop(int customerId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterShopHandleWrapper.getHandle(), "customerId");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
@@ -335,7 +342,6 @@ public class CustomerFederate
         // LRC to start delivering callbacks to the federate
         while( fedamb.isAdvancing )
         {
-            System.out.println("DKSLLKDFSJSDK");
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
 

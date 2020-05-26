@@ -138,8 +138,8 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                                         String objectName )
             throws FederateInternalError
     {
-        log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
-                theObjectClass + ", name=" + objectName );
+//        log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
+//                theObjectClass + ", name=" + objectName );
     }
 
     @Override

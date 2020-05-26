@@ -138,8 +138,8 @@ class QueueFederateAmbassador extends NullFederateAmbassador
                                         String objectName )
             throws FederateInternalError
     {
-        log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
-                theObjectClass + ", name=" + objectName );
+//        log( "QueueAmbassador - Discoverd Object: handle=" + theObject + ", classHandle=" +
+//                theObjectClass + ", name=" + objectName );
     }
 
     @Override

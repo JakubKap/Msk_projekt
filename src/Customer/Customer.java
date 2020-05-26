@@ -1,14 +1,22 @@
 package Customer;
 
+import hla.rti1516e.ObjectInstanceHandle;
+
 public class Customer {
     private int id;
     private int numberOfProductsInBasket;
     private int valueOfProducts;
     private boolean endShopping;
     private static int currentId = 0;
+    private ObjectInstanceHandle handler;
 
     public Customer() {
         this.id = currentId++;
+    }
+
+    public Customer(ObjectInstanceHandle handler) {
+        this.id = currentId++;
+        this.handler = handler;
     }
 
     public int getId() {
@@ -41,5 +49,13 @@ public class Customer {
 
     public void setEndShopping(boolean endShopping) {
         this.endShopping = endShopping;
+    }
+
+    public ObjectInstanceHandle getHandler() {
+        return handler;
+    }
+
+    public void setHandler(ObjectInstanceHandle handler) {
+        this.handler = handler;
     }
 }
