@@ -113,11 +113,15 @@ public class CustomerFederate
         }
 
         if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
+
+
             int customerId = 0;
             ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
             for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
                 byte[] bytes = parameterHandleValueMap.get(parameter);
                 customerId = Utils.byteToInt(bytes);
+                ObjectInstanceHandle customerHandle = customers.get(customerId).getHandler();
+                updateAttributeValues(customerHandle);
                 enterQueue(customerId);
             }
             eventList.removeFirst();
@@ -174,35 +178,21 @@ public class CustomerFederate
     }
 
     private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception {
-        ///////////////////////////////////////////////
-        // create the necessary container and values //
-        ///////////////////////////////////////////////
-        // create a new map with an initial capacity - this will grow as required
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-        // create the collection to store the values in, as you can see
-        // this is quite a lot of work. You don't have to use the encoding
-        // helpers if you don't want. The RTI just wants an arbitrary byte[]
+//        int randomValue = 101 + new Random().nextInt(3);
+        byte[] numberOfProductsInBasket = Utils.intToByte(encoderFactory, 3);
+        byte[] valueOfProducts = Utils.intToByte(encoderFactory, 5);
 
-        // generate the value for the number of cups (same as the timestep)
-        HLAinteger16BE cupsValue = encoderFactory.createHLAinteger16BE( getTimeAsShort() );
-//        attributes.put( cupsHandle, cupsValue.toByteArray() );
+        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasket);
+        attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProducts);
 
-        // generate the value for the flavour on our magically flavour changing drink
-        // the values for the enum are defined in the FOM
-        int randomValue = 101 + new Random().nextInt(3);
-        HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE( randomValue );
-//        attributes.put( flavHandle, flavValue.toByteArray() );
+        log("BLABLABLA ");
 
-        //////////////////////////
-        // do the actual update //
-        //////////////////////////
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
 
-        // note that if you want to associate a particular timestamp with the
-        // update. here we send another update, this time with a timestamp:
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
+        log("Zmodyfikowano obiekt klienta " + objectHandle + " " + attributes);
     }
 
     private void deleteObject() throws RTIexception {

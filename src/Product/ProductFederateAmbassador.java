@@ -109,8 +109,9 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                                         String objectName )
             throws FederateInternalError
     {
+//        this.federate.customersList.add(theObject);
 //        log( "ProductAmbassador - Discoverd Object: handle=" + theObject + ", classHandle=" +
-//                theObjectClass + ", name=" + objectName );
+//                theObjectClass + ", name=" + objectName + "SIZE = " + this.federate.customersList.size() );
     }
 
     @Override

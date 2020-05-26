@@ -14,6 +14,7 @@
  */
 package Product;
 
+import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
@@ -31,7 +32,9 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Random;
 
 @SuppressWarnings("Duplicates")
@@ -58,6 +61,8 @@ public class ProductFederate {
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
 
     public LinkedList<Event> eventList = new LinkedList<>();
+
+    public int customerCounter = 0;
 
     private static Random random = new Random();
 
@@ -97,7 +102,6 @@ public class ProductFederate {
                     customerId = Utils.byteToInt(bytes);
                     endShopping(customerId);
                 }
-                eventList.removeFirst();
             }
 
 //            advanceTime( 1.0 );
@@ -115,9 +119,9 @@ public class ProductFederate {
         this.endShoppingHandleWrapper.publish();
         this.enterShopHandleWrapper.subscribe();
 
-        this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
-        customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
-        customerHandleWrapper.subscribe();
+//        this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
+//        customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
+//        customerHandleWrapper.publish();
 
         log("Published and Subscribed");
     }
@@ -129,37 +133,21 @@ public class ProductFederate {
     }
 
     private void updateAttributeValues(ObjectInstanceHandle objectHandle) throws RTIexception {
-        ///////////////////////////////////////////////
-        // create the necessary container and values //
-        ///////////////////////////////////////////////
-        // create a new map with an initial capacity - this will grow as required
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-        // create the collection to store the values in, as you can see
-        // this is quite a lot of work. You don't have to use the encoding
-        // helpers if you don't want. The RTI just wants an arbitrary byte[]
-
-        // generate the value for the number of cups (same as the timestep)
-        HLAinteger16BE cupsValue = encoderFactory.createHLAinteger16BE(getTimeAsShort());
-//        attributes.put( cupsHandle, cupsValue.toByteArray() );
-
-        // generate the value for the flavour on our magically flavour changing drink
-        // the values for the enum are defined in the FOM
-        int randomValue = 101 + new Random().nextInt(3);
-        HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE(randomValue);
-//        attributes.put( flavHandle, flavValue.toByteArray() );
+//        int randomValue = 101 + new Random().nextInt(3);
         byte[] numberOfProductsInBasket = Utils.intToByte(encoderFactory, 3);
+        byte[] valueOfProducts = Utils.intToByte(encoderFactory, 5);
+
         attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasket);
+        attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProducts);
 
-        //////////////////////////
-        // do the actual update //
-        //////////////////////////
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
 
-        // note that if you want to associate a particular timestamp with the
-        // update. here we send another update, this time with a timestamp:
+
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
         rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
+
+        log("Zmodyfikowano obiekt klienta " + objectHandle + " " + attributes);
     }
 
     private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
