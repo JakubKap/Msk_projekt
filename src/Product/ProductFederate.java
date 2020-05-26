@@ -26,7 +26,6 @@ import utils.Event;
 import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
 import utils.Utils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -85,9 +84,27 @@ public class ProductFederate {
 
         while (fedamb.isRunning) {
 //            updateAttributeValues( objectHandle );
-            endShopping(5);
+//            endShopping(5);
+            Event event = null;
+            if (!eventList.isEmpty()) {
+                event = eventList.getFirst();
+            }
+
+            if (event != null && event.getInteractionClassHandle().equals(this.enterShopHandleWrapper.getHandle())) {
+                int customerId = 0;
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    endShopping(customerId);
+                }
+                eventList.removeFirst();
+            }
+
 //            advanceTime( 1.0 );
-            advanceTime(random.nextInt(9) + 1);
+            advanceTime( random.nextInt(9) + 1 );
+            // jesli wartosc zmiennej ustawiona to wyslij odpowiednia interakcje
+            log( "Time Advanced to " + fedamb.federateTime );
         }
 
         deleteObject(objectHandle);
@@ -160,19 +177,6 @@ public class ProductFederate {
 
         rtiamb.sendInteraction(endShoppingHandleWrapper.getHandle(), parameters, generateTag(), time);
         log("koniec kupowania: " + customerId + " time: " + fedamb.federateTime);
-    }
-
-    protected void endShopping(int customerId) throws RTIexception {
-        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EndShopping");
-
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
-        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
-        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
-
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-
-        rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
-        log("koniec kupowania: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////

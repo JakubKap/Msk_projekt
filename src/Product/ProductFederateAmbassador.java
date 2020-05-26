@@ -207,11 +207,6 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                 builder.append(" received, klientId = " + customerId);
             }
 
-//            try {
-//                federate.endShopping(customerId);
-//            } catch (RTIexception rtIexception) {
-//                rtIexception.printStackTrace();
-//            }
             federate.eventList.add(new Event(interactionClass, theParameters));
         }
 

@@ -52,29 +52,6 @@ public class CustomerFederate
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
-    protected ObjectClassHandle customerHandle;
-    protected AttributeHandle customerIdHandle;
-    protected AttributeHandle numberOfProductsInBasketHandle;
-    protected AttributeHandle valueOfProductsHandle;
-
-    protected ObjectClassHandle queueHandle;
-    protected AttributeHandle customerListIdsHandle;
-    protected AttributeHandle queueIdHandle;
-    protected AttributeHandle maxLimitHandle;
-    protected AttributeHandle checkoutIdRefHandle;
-    protected ObjectClassHandle checkoutHandle;
-    protected AttributeHandle checkoutIdHandle;
-    protected AttributeHandle isPrivilegedHandle;
-    protected AttributeHandle isFreeHandle;
-
-    protected InteractionClassHandle startSimulationHandle;
-    private InteractionClassHandle endShoppingHandle;
-    private InteractionClassHandle servicingCustomerHandle;
-    private InteractionClassHandle enterShopHandle;
-    private InteractionClassHandle enterQueueHandle;
-    private InteractionClassHandle payHandle;
-    private InteractionClassHandle exitShopHandle;
-
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
     protected RtiObjectClassHandleWrapper queueHandleWrapper;
     protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
@@ -127,7 +104,7 @@ public class CustomerFederate
                 event = eventList.getFirst();
             }
 
-            if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandle)) {
+            if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
                 int customerId = 0;
                 ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
                 for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
@@ -226,7 +203,9 @@ public class CustomerFederate
         log( "Deleted Object, handle=" + handle );
     }
 
-    private void enterShop(int customerId) throws RTIexception {
+    private void enterShop() throws RTIexception {
+        Customer customer = new Customer();
+        int customerId = customer.getId();
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterShopHandleWrapper.getHandle(), "customerId");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
