@@ -88,17 +88,15 @@ public class CustomerFederate
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-        //todo
-//        ObjectInstanceHandle objectHandle = registerObject();
 
         while( fedamb.isRunning)
         {
-            createClient();
+            Customer customer = createCustomer();
 //            updateAttributeValues( objectHandle );
 
-//            enterShop();
+            enterShop(customer.getId());
 //
-//            something();
+            something();
 
             advanceTime( random.nextInt(9) + 1 );
         }
@@ -167,11 +165,12 @@ public class CustomerFederate
         return objectInstanceHandle;
     }
 
-    private void createClient() throws RTIexception {
+    private Customer createCustomer() throws RTIexception {
         Customer customer = new Customer();
         customers.add(customer);
         ObjectInstanceHandle customerInstanceHandler = registerObject();
         customer.setHandler(customerInstanceHandler);
+        return customer;
     }
 
     private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception {
@@ -213,9 +212,7 @@ public class CustomerFederate
         }
     }
 
-    private void enterShop() throws RTIexception {
-        Customer customer = new Customer();
-        int customerId = customer.getId();
+    private void enterShop(int customerId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterShopHandleWrapper.getHandle(), "customerId");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
@@ -345,7 +342,6 @@ public class CustomerFederate
         // LRC to start delivering callbacks to the federate
         while( fedamb.isAdvancing )
         {
-            System.out.println("DKSLLKDFSJSDK");
             rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
         }
 

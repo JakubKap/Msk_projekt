@@ -1,7 +1,6 @@
 package Customer;
 
 import hla.rti1516e.ObjectInstanceHandle;
-import rtiHelperClasses.RtiObjectClassHandleWrapper;
 
 public class Customer {
     private int id;

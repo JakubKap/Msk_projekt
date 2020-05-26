@@ -271,7 +271,6 @@ public class ProductFederate {
         // wait for the time advance to be granted. ticking will tell the
         // LRC to start delivering callbacks to the federate
         while (fedamb.isAdvancing) {
-            System.out.println("DKSLLKDFSJSDK");
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
