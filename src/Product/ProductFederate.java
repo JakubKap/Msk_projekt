@@ -148,6 +148,8 @@ public class ProductFederate {
         int randomValue = 101 + new Random().nextInt(3);
         HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE(randomValue);
 //        attributes.put( flavHandle, flavValue.toByteArray() );
+        byte[] numberOfProductsInBasket = Utils.intToByte(encoderFactory, 3);
+        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasket);
 
         //////////////////////////
         // do the actual update //

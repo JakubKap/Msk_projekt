@@ -17,4 +17,8 @@ public class RtiAttributeHandleWrapper {
     public AttributeHandle getHandle() {
         return handle;
     }
+
+    public String getHandleString() {
+        return handleString;
+    }
 }
