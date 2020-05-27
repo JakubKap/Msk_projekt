@@ -16,8 +16,6 @@ package Customer;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger16BE;
-import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
@@ -97,7 +95,7 @@ public class CustomerFederate
 
             enterShop(customer.getId());
 //
-            something();
+            updateCustomersWithBoughtProducts();
 
             advanceTime( random.nextInt(9) + 1 );
         }
@@ -107,7 +105,7 @@ public class CustomerFederate
         destroyFederation();
     }
 
-    private void something() throws RTIexception {
+    private void updateCustomersWithBoughtProducts() throws RTIexception {
         Event event = null;
         if (!eventList.isEmpty()) {
             event = eventList.getFirst();
