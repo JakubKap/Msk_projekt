@@ -31,10 +31,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @SuppressWarnings("Duplicates")
 public class CustomerFederate
@@ -114,12 +111,27 @@ public class CustomerFederate
 
         if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
             int customerId = 0;
+            int numberOfProductsInBasket = 0;
+            int valueOfProducts = 0;
             ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+            int index = 0;
             for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                byte[] bytes = parameterHandleValueMap.get(parameter);
-                customerId = Utils.byteToInt(bytes);
-                enterQueue(customerId);
+                if (index == 0) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    index++;
+                } else if (index == 1) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    numberOfProductsInBasket = Utils.byteToInt(bytes);
+                    index++;
+                } else {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    valueOfProducts = Utils.byteToInt(bytes);
+                }
             }
+            Customer customer = customers.get(customerId);
+            updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
+            enterQueue(customerId);
             eventList.removeFirst();
         }
     }
@@ -161,7 +173,7 @@ public class CustomerFederate
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
         ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(customerHandleWrapper.getHandle());
-        log( "Registered Object, handle=" + objectInstanceHandle );
+//        log( "Registered Object, handle=" + objectInstanceHandle );
         return objectInstanceHandle;
     }
 
@@ -173,36 +185,21 @@ public class CustomerFederate
         return customer;
     }
 
-    private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception {
-        ///////////////////////////////////////////////
-        // create the necessary container and values //
-        ///////////////////////////////////////////////
-        // create a new map with an initial capacity - this will grow as required
+    private void updateAttributeValues( Customer customer, int numberOfProductsInBasket, int valueOfProducts) throws RTIexception {
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-        // create the collection to store the values in, as you can see
-        // this is quite a lot of work. You don't have to use the encoding
-        // helpers if you don't want. The RTI just wants an arbitrary byte[]
+//        int randomValue = 101 + new Random().nextInt(3);
+        byte[] numberOfProductsInBasketArray = Utils.intToByte(encoderFactory, numberOfProductsInBasket);
+        byte[] valueOfProductsArray = Utils.intToByte(encoderFactory, valueOfProducts);
 
-        // generate the value for the number of cups (same as the timestep)
-        HLAinteger16BE cupsValue = encoderFactory.createHLAinteger16BE( getTimeAsShort() );
-//        attributes.put( cupsHandle, cupsValue.toByteArray() );
+        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasketArray);
+        attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProductsArray);
 
-        // generate the value for the flavour on our magically flavour changing drink
-        // the values for the enum are defined in the FOM
-        int randomValue = 101 + new Random().nextInt(3);
-        HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE( randomValue );
-//        attributes.put( flavHandle, flavValue.toByteArray() );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+        rtiamb.updateAttributeValues(customer.getHandler(), attributes, generateTag(), time);
 
-        //////////////////////////
-        // do the actual update //
-        //////////////////////////
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
-
-        // note that if you want to associate a particular timestamp with the
-        // update. here we send another update, this time with a timestamp:
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
+        log("Customer " + customer.getId() +  " modified: " + "numberOfProductsInBasket: " + numberOfProductsInBasket
+                + ", valueOfProducts: " + valueOfProducts );
     }
 
     private void deleteObject() throws RTIexception {
@@ -220,7 +217,7 @@ public class CustomerFederate
 
         rtiamb.sendInteraction( enterShopHandleWrapper.getHandle(), parameters, generateTag(), time );
 
-        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
+        log("(EnterShop) sent, customerId: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     private void enterQueue(int customerId) throws RTIexception {
@@ -233,7 +230,7 @@ public class CustomerFederate
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
-        log("wejście do kolejki: "+ customerId + " time: "+ fedamb.federateTime);
+        log("(EnterQueue) sent, customerId: " + customerId + " time: "+ fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -297,7 +294,7 @@ public class CustomerFederate
      */
     private void log( String message )
     {
-        System.out.println(FEDERATE_NAME_TO_LOGGING + message );
+        System.out.println("CustomerFederate   : " + message );
     }
 
     /**

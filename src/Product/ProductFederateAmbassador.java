@@ -109,8 +109,9 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                                         String objectName )
             throws FederateInternalError
     {
+//        this.federate.customersList.add(theObject);
 //        log( "ProductAmbassador - Discoverd Object: handle=" + theObject + ", classHandle=" +
-//                theObjectClass + ", name=" + objectName );
+//                theObjectClass + ", name=" + objectName + "SIZE = " + this.federate.customersList.size() );
     }
 
     @Override
@@ -204,7 +205,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
             for(ParameterHandle parameter : theParameters.keySet()){
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
-                builder.append(" received, klientId = " + customerId);
+                builder.append(" received, customerId = " + customerId);
             }
 
             federate.eventList.add(new Event(interactionClass, theParameters));

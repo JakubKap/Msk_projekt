@@ -280,6 +280,16 @@
     				<dataType>HLAinteger32BE</dataType>
     				<semantics>Identyfikator klienta</semantics>
     			</parameter>
+				<parameter>
+					<name>numberOfProductsInBasket</name>
+					<dataType>HLAinteger32BE</dataType>
+					<semantics>Identyfikator klienta</semantics>
+				</parameter>
+				<parameter>
+					<name>valueOfProducts</name>
+					<dataType>HLAinteger32BE</dataType>
+					<semantics>Identyfikator klienta</semantics>
+				</parameter>
     		</interactionClass>
     		<interactionClass>
     			<name>EnterQueue</name>

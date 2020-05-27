@@ -14,7 +14,7 @@ public abstract class RtiClassHandle {
 
     public abstract void subscribe() throws RTIexception;
     public abstract void publish() throws RTIexception;
-    protected final void publishAndSubscribe() throws RTIexception {
+    public final void publishAndSubscribe() throws RTIexception {
         publish();
         subscribe();
     }
