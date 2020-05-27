@@ -61,6 +61,10 @@ public class CustomerFederate
     private static Random random = new Random();
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     private List<Customer> customers = new ArrayList<>();
+    protected ParameterHandle customerIdParameterHandle;
+    protected ParameterHandle numberOfProductsInBasketParameterHandle;
+    protected ParameterHandle valueOfProductsParameterHandle;
+
 
     //----------------------------------------------------------
     //                    INSTANCE METHODS
@@ -114,16 +118,13 @@ public class CustomerFederate
             int numberOfProductsInBasket = 0;
             int valueOfProducts = 0;
             ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-            int index = 0;
             for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                if (index == 0) {
+                if (parameter.equals(this.customerIdParameterHandle)) {
                     byte[] bytes = parameterHandleValueMap.get(parameter);
                     customerId = Utils.byteToInt(bytes);
-                    index++;
-                } else if (index == 1) {
+                } else if (parameter.equals(this.numberOfProductsInBasketParameterHandle)){
                     byte[] bytes = parameterHandleValueMap.get(parameter);
                     numberOfProductsInBasket = Utils.byteToInt(bytes);
-                    index++;
                 } else {
                     byte[] bytes = parameterHandleValueMap.get(parameter);
                     valueOfProducts = Utils.byteToInt(bytes);
@@ -163,6 +164,10 @@ public class CustomerFederate
 
         this.endShoppingHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EndShopping");
         this.endShoppingHandleWrapper.subscribe();
+
+        this.customerIdParameterHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "customerId");
+        this.numberOfProductsInBasketParameterHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "numberOfProductsInBasket");
+        this.valueOfProductsParameterHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "valueOfProducts");
 
         this.servicingCustomerHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ServicingCustomer");
         this.servicingCustomerHandleWrapper.subscribe();

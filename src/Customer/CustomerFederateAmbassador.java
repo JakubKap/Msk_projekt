@@ -232,23 +232,20 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
 
         if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
         {
-            builder.append( " (EndShopping)" );
+            builder.append( " (EndShopping) received" );
             int customerId = 0;
             int numberOfProductsInBasket = 0;
             int valueOfProducts = 0;
             int product = 0;
-            int index = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
-                if (index == 0) {
+                if (parameter.equals(federate.customerIdParameterHandle)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
-                    builder.append(" received, customerId = " + customerId);
-                    index++;
-                } else if (index == 1) {
+                    builder.append(", customerId = " + customerId);
+                } else if (parameter.equals(federate.numberOfProductsInBasketParameterHandle)) {
                     byte[] bytes = theParameters.get(parameter);
                     numberOfProductsInBasket = Utils.byteToInt(bytes);
                     builder.append(", numberOfProductsInBasket = " + numberOfProductsInBasket);
-                    index++;
                 } else {
                     byte[] bytes = theParameters.get(parameter);
                     valueOfProducts = Utils.byteToInt(bytes);
