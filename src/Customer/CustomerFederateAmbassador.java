@@ -175,24 +175,24 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                                         SupplementalReflectInfo reflectInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-
-        // print the handle
-        builder.append( " handle=" + theObject );
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the attribute information
-        builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
-
-        log( builder.toString() );
+//        StringBuilder builder = new StringBuilder( "Reflection for object:" );
+//
+//        // print the handle
+//        builder.append( " handle=" + theObject );
+//        // print the tag
+//        builder.append( ", tag=" + new String(tag) );
+//        // print the time (if we have it) we'll get null if we are just receiving
+//        // a forwarded call from the other reflect callback above
+//        if( time != null )
+//        {
+//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+//        }
+//
+//        // print the attribute information
+//        builder.append( ", attributeCount=" + theAttributes.size() );
+//        builder.append( "\n" );
+//
+//        log( builder.toString() );
     }
 
     @Override
@@ -232,12 +232,28 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
 
         if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
         {
-            builder.append( " (EndShop)" );
+            builder.append( " (EndShopping)" );
             int customerId = 0;
+            int numberOfProductsInBasket = 0;
+            int valueOfProducts = 0;
+            int product = 0;
+            int index = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
-                byte[] bytes = theParameters.get(parameter);
-                customerId = Utils.byteToInt(bytes);
-                builder.append(" received, klientId = " + customerId);
+                if (index == 0) {
+                    byte[] bytes = theParameters.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    builder.append(" received, customerId = " + customerId);
+                    index++;
+                } else if (index == 1) {
+                    byte[] bytes = theParameters.get(parameter);
+                    numberOfProductsInBasket = Utils.byteToInt(bytes);
+                    builder.append(", numberOfProductsInBasket = " + numberOfProductsInBasket);
+                    index++;
+                } else {
+                    byte[] bytes = theParameters.get(parameter);
+                    valueOfProducts = Utils.byteToInt(bytes);
+                    builder.append(", valueOfProducts = " + valueOfProducts);
+                }
             }
 
             federate.eventList.add(new Event(interactionClass, theParameters));

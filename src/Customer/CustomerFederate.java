@@ -31,10 +31,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @SuppressWarnings("Duplicates")
 public class CustomerFederate
@@ -113,17 +110,28 @@ public class CustomerFederate
         }
 
         if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
-
-
             int customerId = 0;
+            int numberOfProductsInBasket = 0;
+            int valueOfProducts = 0;
             ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+            int index = 0;
             for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                byte[] bytes = parameterHandleValueMap.get(parameter);
-                customerId = Utils.byteToInt(bytes);
-                ObjectInstanceHandle customerHandle = customers.get(customerId).getHandler();
-                updateAttributeValues(customerHandle);
-                enterQueue(customerId);
+                if (index == 0) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    index++;
+                } else if (index == 1) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    numberOfProductsInBasket = Utils.byteToInt(bytes);
+                    index++;
+                } else {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    valueOfProducts = Utils.byteToInt(bytes);
+                }
             }
+            Customer customer = customers.get(customerId);
+            updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
+            enterQueue(customerId);
             eventList.removeFirst();
         }
     }
@@ -165,7 +173,7 @@ public class CustomerFederate
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
         ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(customerHandleWrapper.getHandle());
-        log( "Registered Object, handle=" + objectInstanceHandle );
+//        log( "Registered Object, handle=" + objectInstanceHandle );
         return objectInstanceHandle;
     }
 
@@ -177,22 +185,21 @@ public class CustomerFederate
         return customer;
     }
 
-    private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception {
+    private void updateAttributeValues( Customer customer, int numberOfProductsInBasket, int valueOfProducts) throws RTIexception {
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
 //        int randomValue = 101 + new Random().nextInt(3);
-        byte[] numberOfProductsInBasket = Utils.intToByte(encoderFactory, 3);
-        byte[] valueOfProducts = Utils.intToByte(encoderFactory, 5);
+        byte[] numberOfProductsInBasketArray = Utils.intToByte(encoderFactory, numberOfProductsInBasket);
+        byte[] valueOfProductsArray = Utils.intToByte(encoderFactory, valueOfProducts);
 
-        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasket);
-        attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProducts);
-
-        log("BLABLABLA ");
+        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasketArray);
+        attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProductsArray);
 
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
+        rtiamb.updateAttributeValues(customer.getHandler(), attributes, generateTag(), time);
 
-        log("Zmodyfikowano obiekt klienta " + objectHandle + " " + attributes);
+        log("Customer " + customer.getId() +  " modified: " + "numberOfProductsInBasket: " + numberOfProductsInBasket
+                + ", valueOfProducts: " + valueOfProducts );
     }
 
     private void deleteObject() throws RTIexception {
@@ -210,7 +217,7 @@ public class CustomerFederate
 
         rtiamb.sendInteraction( enterShopHandleWrapper.getHandle(), parameters, generateTag(), time );
 
-        log("Dodano nowego kilenta, id: "+ customerId + " time: "+ fedamb.federateTime);
+        log("(EnterShop) sent, customerId: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
     private void enterQueue(int customerId) throws RTIexception {
@@ -223,7 +230,7 @@ public class CustomerFederate
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
-        log("wejście do kolejki: "+ customerId + " time: "+ fedamb.federateTime);
+        log("(EnterQueue) sent, customerId: " + customerId + " time: "+ fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -287,7 +294,7 @@ public class CustomerFederate
      */
     private void log( String message )
     {
-        System.out.println(FEDERATE_NAME_TO_LOGGING + message );
+        System.out.println("CustomerFederate   : " + message );
     }
 
     /**

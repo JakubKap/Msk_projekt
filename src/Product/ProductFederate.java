@@ -102,6 +102,7 @@ public class ProductFederate {
                     customerId = Utils.byteToInt(bytes);
                     endShopping(customerId);
                 }
+                eventList.removeFirst();
             }
 
 //            advanceTime( 1.0 );
@@ -156,14 +157,24 @@ public class ProductFederate {
     }
 
     protected void endShopping(int customerId) throws RTIexception {
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(3);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "customerId");
+        ParameterHandle numberOfProductsInBasketHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "numberOfProductsInBasket");
+        ParameterHandle valueOfProductsHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "valueOfProducts");
+
+
+        int numberOfProductsInBasket = random.nextInt(5) + 2;
+        int valueOfProducts = random.nextInt(50) + 10;
+
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
+        parameters.put(numberOfProductsInBasketHandle, Utils.intToByte(encoderFactory, numberOfProductsInBasket));
+        parameters.put(valueOfProductsHandle, Utils.intToByte(encoderFactory, valueOfProducts));
 
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
         rtiamb.sendInteraction(endShoppingHandleWrapper.getHandle(), parameters, generateTag(), time);
-        log("koniec kupowania: " + customerId + " time: " + fedamb.federateTime);
+        log("(EndShopping) sent, customerId: " + customerId +  ", numberOfProductsInBasket: " + numberOfProductsInBasket
+                + ", valueOfProductsHandle: " + valueOfProducts +  ", time: " + fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -222,7 +233,7 @@ public class ProductFederate {
      * This is just a helper method to make sure all logging it output in the same form
      */
     private void log(String message) {
-        System.out.println(FEDERATE_NAME_TO_LOGGING + message);
+        System.out.println("ProductFederate   : " + message);
     }
 
     /**

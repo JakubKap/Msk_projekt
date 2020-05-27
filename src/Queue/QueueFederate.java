@@ -14,17 +14,11 @@
  */
 package Queue;
 
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.HLAvariableArray;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
 import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
@@ -34,11 +28,17 @@ import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
+import utils.Event;
+import utils.Utils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 @SuppressWarnings("Duplicates")
@@ -59,6 +59,10 @@ public class QueueFederate
     protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterCheckoutHandleWrapper;
+    public int numberOfQueues = 5;
+    public List<Queue> queues;
+    public LinkedList<Integer> customersIds = new LinkedList<>();
+    private Random random = new Random();
 
     /**
      * This is just a helper method to make sure all logging it output in the same form
@@ -164,19 +168,42 @@ public class QueueFederate
         publishAndSubscribe();
         log( "Published and Subscribed" );
 
-        ObjectInstanceHandle objectHandle = registerObject();
-        log( "Registered Object, handle=" + objectHandle );
+//        ObjectInstanceHandle objectHandle = registerObject();
+//        log( "Registered Object, handle=" + objectHandle );
 
         while( fedamb.isRunning )
         {
-            updateAttributeValues( objectHandle );
+//            updateAttributeValues( objectHandle );
+
+            if (queues == null) {
+                queues = new ArrayList<>();
+                for (int i = 0; i < numberOfQueues; i++) {
+                    int maxQueueSize = new Random().nextInt(5) + 3;
+                    Queue queue = new Queue(maxQueueSize);
+                    queues.add(queue);
+                    ObjectInstanceHandle customerInstanceHandler = registerObject();
+                    queue.setHandler(customerInstanceHandler);
+                }
+            }
+
+            Integer customerId = null;
+            if (!customersIds.isEmpty()) {
+                customerId = customersIds.getFirst();
+            }
+
+            if (customerId != null) {
+                int numberOfQueue = random.nextInt(queues.size());
+                Queue queue= queues.get(numberOfQueue);
+                updateAttributeValues(queue, customerId);
+                customersIds.removeFirst();
+            }
 
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
         }
 
-        deleteObject( objectHandle );
-        log( "Deleted Object, handle=" + objectHandle );
+//        deleteObject( objectHandle );
+//        log( "Deleted Object, handle=" + objectHandle );
 
         rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
         log( "Resigned from Federation" );
@@ -278,9 +305,21 @@ public class QueueFederate
      * Note that we don't actually have to update all the attributes at once, we
      * could update them individually, in groups or not at all!
      */
-    private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
+    private void updateAttributeValues(Queue queue, int numberOfClient) throws RTIexception
     {
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
 
+        List<Integer> customerIds = queue.getCustomerListIds();
+        customerIds.add(numberOfClient);
+
+        HLAvariableArray customerIdsList = new CustomersArray(customerIds);
+
+        attributes.put(queueHandleWrapper.getAttribute("customerListIds"), customerIdsList.toByteArray());
+
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+        rtiamb.updateAttributeValues(queue.getHandler(), attributes, generateTag(), time);
+
+        log("Customer: " + numberOfClient + " was added to queue: " + queue.getId());
     }
 
     /**

@@ -205,7 +205,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
             for(ParameterHandle parameter : theParameters.keySet()){
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
-                builder.append(" received, klientId = " + customerId);
+                builder.append(" received, customerId = " + customerId);
             }
 
             federate.eventList.add(new Event(interactionClass, theParameters));

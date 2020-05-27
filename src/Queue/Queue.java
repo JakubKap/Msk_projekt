@@ -1,18 +1,23 @@
 package Queue;
 
+import hla.rti1516e.ObjectInstanceHandle;
+
+import java.util.LinkedList;
 import java.util.List;
 
 public class Queue {
     private int id;
     private int maxLimit;
-    private List<Integer> customerListIds;
+    private List<Integer> customerListIds = new LinkedList<>();
     private int checkoutId;
+    private static int currentId = 0;
+    private ObjectInstanceHandle handler;
 
-    public Queue(int id, int maxLimit, List<Integer> customerListIds, int checkoutId) {
-        this.id = id;
+    public Queue(int maxLimit) {
         this.maxLimit = maxLimit;
-        this.customerListIds = customerListIds;
-        this.checkoutId = checkoutId;
+        this.id = currentId;
+        this.checkoutId = currentId++;
+        // TODO zsynchronizuj ID kolejki z ID kasy
     }
 
     public int getId() {
@@ -45,5 +50,13 @@ public class Queue {
 
     public void setCheckoutId(int checkoutId) {
         this.checkoutId = checkoutId;
+    }
+
+    public ObjectInstanceHandle getHandler() {
+        return handler;
+    }
+
+    public void setHandler(ObjectInstanceHandle handler) {
+        this.handler = handler;
     }
 }
