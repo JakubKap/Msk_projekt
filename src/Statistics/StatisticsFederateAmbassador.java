@@ -232,7 +232,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "Interaction ");
 
-        if( interactionClass.equals(federate.enterShopHandle) )
+        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()) )
         {
             builder.append( " (EnterShop)" );
         }
