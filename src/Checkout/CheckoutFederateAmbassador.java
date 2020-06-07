@@ -28,6 +28,8 @@ import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
+import utils.Event;
+import utils.Utils;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -43,7 +45,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private CheckoutFederate checkoutFederate;
+    private CheckoutFederate federate;
 
     // these variables are accessible in the package
     protected double federateTime        = 0.0;
@@ -63,7 +65,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador
 
     public CheckoutFederateAmbassador( CheckoutFederate checkoutFederate)
     {
-        this.checkoutFederate = checkoutFederate;
+        this.federate = checkoutFederate;
     }
 
     //----------------------------------------------------------
@@ -227,6 +229,48 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador
             throws FederateInternalError
     {
         StringBuilder builder = new StringBuilder( "Interaction Received:" );
+
+        if( interactionClass.equals(federate.enterCheckoutHandle))
+        {
+            builder.append( " (EnterCheckout) received" );
+            int customerId = 0;
+            int checkoutId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                if (parameter.equals(federate.customerIdParameterHandleEnterCheckout)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    builder.append(", customerId = " + customerId);
+                } else {
+                    byte[] bytes = theParameters.get(parameter);
+                    checkoutId = Utils.byteToInt(bytes);
+                    builder.append(", checkoutId = " + checkoutId);
+                }
+            }
+
+            federate.servicingCustomers.add(new Event(interactionClass, theParameters));
+        } else if( interactionClass.equals(federate.payHandle)) {
+        builder.append( " (Pay) received" );
+        int customerId = 0;
+        int checkoutId = 0;
+        int price = 0;
+        for(ParameterHandle parameter : theParameters.keySet()){
+            if (parameter.equals(federate.customerIdParameterHandlePay)) {
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                builder.append(", customerId = " + customerId);
+            } else if (parameter.equals(federate.checkoutIdParameterHandlePay)) {
+                byte[] bytes = theParameters.get(parameter);
+                checkoutId = Utils.byteToInt(bytes);
+                builder.append(", checkoutId = " + checkoutId);
+            } else {
+                byte[] bytes = theParameters.get(parameter);
+                price = Utils.byteToInt(bytes);
+                builder.append(", valueOfProducts = " + price);
+            }
+        }
+
+        federate.customersToExit.add(new Event(interactionClass, theParameters));
+    }
 
         // print the handle
 

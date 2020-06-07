@@ -236,13 +236,12 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
             int customerId = 0;
             int numberOfProductsInBasket = 0;
             int valueOfProducts = 0;
-            int product = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
-                if (parameter.equals(federate.customerIdParameterHandle)) {
+                if (parameter.equals(federate.customerIdParameterHandleEndShopping)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
                     builder.append(", customerId = " + customerId);
-                } else if (parameter.equals(federate.numberOfProductsInBasketParameterHandle)) {
+                } else if (parameter.equals(federate.numberOfProductsInBasketParameterHandleEndShopping)) {
                     byte[] bytes = theParameters.get(parameter);
                     numberOfProductsInBasket = Utils.byteToInt(bytes);
                     builder.append(", numberOfProductsInBasket = " + numberOfProductsInBasket);
@@ -253,7 +252,32 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                 }
             }
 
-            federate.eventList.add(new Event(interactionClass, theParameters));
+            federate.doingShoppingCustomers.add(new Event(interactionClass, theParameters));
+        } else if( interactionClass.equals(federate.servicingCustomerHandleWrapper.getHandle())) {
+            builder.append( " (ServivingCustomer) received" );
+            int customerId = 0;
+            int checkoutId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                if (parameter.equals(federate.customerIdParameterHandleServicingCustomer)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    builder.append(", customerId = " + customerId);
+                } else {
+                    byte[] bytes = theParameters.get(parameter);
+                    checkoutId = Utils.byteToInt(bytes);
+                    builder.append(", checkoutId = " + checkoutId);
+                }
+            }
+
+            federate.servicingCustomers.add(new Event(interactionClass, theParameters));
+        } else if( interactionClass.equals(federate.exitShopHandleWrapper.getHandle())) {
+            builder.append( " (ExitShop) received" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                builder.append(", customerId = " + customerId);
+            }
         }
 
         // print the handle
