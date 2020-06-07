@@ -1,6 +1,7 @@
 package rtiHelperClasses;
 
 import hla.rti1516e.InteractionClassHandle;
+import hla.rti1516e.ParameterHandle;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.exceptions.RTIexception;
 
@@ -10,6 +11,10 @@ public class RtiInteractionClassHandleWrapper extends RtiClassHandle{
     public RtiInteractionClassHandleWrapper(RTIambassador rtiamb, String handleString) throws RTIexception {
         super(rtiamb, handleString);
         this.handle = rtiamb.getInteractionClassHandle( handleString );
+    }
+
+    public ParameterHandle getParameter(String parameterString) throws RTIexception {
+        return rtiamb.getParameterHandle(handle, parameterString);
     }
 
     @Override
