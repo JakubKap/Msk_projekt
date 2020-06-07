@@ -1,25 +1,26 @@
 package Statistics;
 
+import hla.rti1516e.LogicalTime;
+import hla.rti1516e.time.HLAfloat64Time;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class Statistics {
-    private float avgPayingDuration;
-    private float avgBeingInShopDuration;
-    private float avgBeingInQueueDuration;
-    private float avgBeingInCheckoutDuration;
+    private double avgPayingDuration;
+    private double avgBeingInShopDuration;
+    private double avgBeingInQueueDuration;
+    private double avgBeingInCheckoutDuration;
     private int avgNumberOfProductsInBasket;
     private int percentOfPrivilegedCheckouts;
     private int avgNumberOfClientsInQueue;
 
-    public Statistics(float avgPayingDuration, float avgBeingInShopDuration, float avgBeingInQueueDuration, float avgBeingInCheckoutDuration, int avgNumberOfProductsInBasket, int percentOfPrivilegedCheckouts, int avgNumberOfClientsInQueue) {
-        this.avgPayingDuration = avgPayingDuration;
-        this.avgBeingInShopDuration = avgBeingInShopDuration;
-        this.avgBeingInQueueDuration = avgBeingInQueueDuration;
-        this.avgBeingInCheckoutDuration = avgBeingInCheckoutDuration;
-        this.avgNumberOfProductsInBasket = avgNumberOfProductsInBasket;
-        this.percentOfPrivilegedCheckouts = percentOfPrivilegedCheckouts;
-        this.avgNumberOfClientsInQueue = avgNumberOfClientsInQueue;
-    }
+    Map<Integer, LogicalTime> clientsEnterShopTimes = new HashMap<>();
+    Map<Integer, LogicalTime> clientsExitShopTimes = new HashMap<>();
+    Map<Integer, LogicalTime> clientsEnterCheckoutTimes = new HashMap<>();
+    Map<Integer, LogicalTime> clientsEnterQueueTimes = new HashMap<>();
 
-    public float getAvgPayingDuration() {
+    public double getAvgPayingDuration() {
         return avgPayingDuration;
     }
 
@@ -27,23 +28,35 @@ public class Statistics {
         this.avgPayingDuration = avgPayingDuration;
     }
 
-    public float getAvgBeingInShopDuration() {
-        return avgBeingInShopDuration;
+    public double getAvgBeingInShopDuration() {
+        double sumOfTimes = 0;
+        for(Map.Entry<Integer, LogicalTime> entry: clientsExitShopTimes.entrySet()) {
+            double enterTime = ((HLAfloat64Time)clientsEnterShopTimes.get(entry.getKey())).getValue();
+            double exitTime = ((HLAfloat64Time)clientsExitShopTimes.get(entry.getKey())).getValue();
+            sumOfTimes += (exitTime - enterTime);
+        }
+        return sumOfTimes / clientsExitShopTimes.size();
     }
 
     public void setAvgBeingInShopDuration(float avgBeingInShopDuration) {
         this.avgBeingInShopDuration = avgBeingInShopDuration;
     }
 
-    public float getAvgBeingInQueueDuration() {
-        return avgBeingInQueueDuration;
+    public double getAvgBeingInQueueDuration() {
+        double sumOfTimes = 0;
+        for(Map.Entry<Integer, LogicalTime> entry: clientsEnterCheckoutTimes.entrySet()) {
+            double enterQueue = ((HLAfloat64Time)clientsEnterQueueTimes.get(entry.getKey())).getValue();
+            double enterCheckout = ((HLAfloat64Time)clientsEnterCheckoutTimes.get(entry.getKey())).getValue();
+            sumOfTimes += (enterCheckout - enterQueue);
+        }
+        return sumOfTimes / clientsEnterCheckoutTimes.size();
     }
 
     public void setAvgBeingInQueueDuration(float avgBeingInQueueDuration) {
         this.avgBeingInQueueDuration = avgBeingInQueueDuration;
     }
 
-    public float getAvgBeingInCheckoutDuration() {
+    public double getAvgBeingInCheckoutDuration() {
         return avgBeingInCheckoutDuration;
     }
 

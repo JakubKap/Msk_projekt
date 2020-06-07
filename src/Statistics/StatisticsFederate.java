@@ -14,17 +14,7 @@
  */
 package Statistics;
 
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
@@ -120,6 +110,7 @@ public class StatisticsFederate
     /** The sync point all federates will sync up on before starting */
     public static final String READY_TO_RUN = "ReadyToRun";
 
+
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
@@ -163,6 +154,11 @@ public class StatisticsFederate
     protected InteractionClassHandle servicingCustomerHandle;
     protected InteractionClassHandle payHandle;
     protected InteractionClassHandle exitShopHandle;
+
+    public ParameterHandle customerIdParameterHandleEnterCheckout;
+    public ParameterHandle customerIdParameterHandleEnterQueue;
+
+    protected Statistics statistics = new Statistics();
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -334,6 +330,9 @@ public class StatisticsFederate
             log( "Time Advanced to " + fedamb.federateTime );
         }
 
+        System.out.println("AvgBeingInShopDuration: " + statistics.getAvgBeingInShopDuration());
+        System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
+
         //////////////////////////////////////
         // 11. delete the object we created //
         //////////////////////////////////////
@@ -497,9 +496,13 @@ public class StatisticsFederate
         enterQueueHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterQueue" );
         rtiamb.subscribeInteractionClass(enterQueueHandle);
 
+        customerIdParameterHandleEnterQueue = rtiamb.getParameterHandle(enterQueueHandle, "customerId");
+
         // subscribe the interaction class EnterCheckout //
         enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
         rtiamb.subscribeInteractionClass(enterCheckoutHandle);
+
+        customerIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandle, "customerId");
 
         // subscribe the interaction class ServicingCustomer //
         servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
