@@ -19,6 +19,8 @@ public class Statistics {
     Map<Integer, LogicalTime> clientsExitShopTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsEnterCheckoutTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsEnterQueueTimes = new HashMap<>();
+    Map<Integer, LogicalTime> clientsPayTimes = new HashMap<>();
+
 
     public double getAvgPayingDuration() {
         return avgPayingDuration;
@@ -57,7 +59,13 @@ public class Statistics {
     }
 
     public double getAvgBeingInCheckoutDuration() {
-        return avgBeingInCheckoutDuration;
+        double sumOfTimes = 0;
+        for(Map.Entry<Integer, LogicalTime> entry: clientsPayTimes.entrySet()) {
+            double enterQueue = ((HLAfloat64Time)clientsEnterCheckoutTimes.get(entry.getKey())).getValue();
+            double endPay = ((HLAfloat64Time)clientsPayTimes.get(entry.getKey())).getValue();
+            sumOfTimes += (endPay - enterQueue);
+        }
+        return sumOfTimes / clientsPayTimes.size();
     }
 
     public void setAvgBeingInCheckoutDuration(float avgBeingInCheckoutDuration) {

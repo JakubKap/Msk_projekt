@@ -157,6 +157,7 @@ public class StatisticsFederate
 
     public ParameterHandle customerIdParameterHandleEnterCheckout;
     public ParameterHandle customerIdParameterHandleEnterQueue;
+    public ParameterHandle customerIdParameterHandlePay;
 
     protected Statistics statistics = new Statistics();
 
@@ -332,6 +333,7 @@ public class StatisticsFederate
 
         System.out.println("AvgBeingInShopDuration: " + statistics.getAvgBeingInShopDuration());
         System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
+        System.out.println("AvgBeingInCheckoutDuration: " + statistics.getAvgBeingInCheckoutDuration());
 
         //////////////////////////////////////
         // 11. delete the object we created //
@@ -511,6 +513,7 @@ public class StatisticsFederate
         // subscribe the interaction class Pay //
         payHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.Pay" );
         rtiamb.subscribeInteractionClass(payHandle);
+        customerIdParameterHandlePay = rtiamb.getParameterHandle(payHandle, "customerId");
 
         // subscribe the interaction class ExitShop //
         exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
