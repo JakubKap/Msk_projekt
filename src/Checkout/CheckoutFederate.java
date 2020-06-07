@@ -14,27 +14,24 @@
  */
 package Checkout;
 
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleSet;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import utils.Event;
+import utils.Utils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class CheckoutFederate
@@ -52,9 +49,25 @@ public class CheckoutFederate
     protected AttributeHandle isPrivilegedHandle;
     protected AttributeHandle isFreeHandle;
 
+    protected ParameterHandle customerIdParameterHandleEnterCheckout;
+    protected ParameterHandle checkoutIdParameterHandleEnterCheckout;
+
     private InteractionClassHandle servicingCustomerHandle;
     protected InteractionClassHandle enterCheckoutHandle;
     private InteractionClassHandle createCheckoutHandle;
+    protected InteractionClassHandle payHandle;
+    protected InteractionClassHandle exitShopHandle;
+
+    protected ParameterHandle customerIdParameterHandlePay;
+    protected ParameterHandle checkoutIdParameterHandlePay;
+    protected ParameterHandle priceParameterHandlePay;
+
+
+    public int numberOfCheckouts = 5;
+    public List<Checkout> checkouts;
+    public LinkedList<Event> servicingCustomers = new LinkedList<>();
+    public LinkedList<Event> customersToExit = new LinkedList<>();
+
 
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
@@ -84,7 +97,59 @@ public class CheckoutFederate
         ObjectInstanceHandle objectHandle = registerObject();
 
         while( fedamb.isRunning ) {
-            updateAttributeValues( objectHandle );
+            if (checkouts == null) {
+                checkouts = new ArrayList<>();
+                for (int i = 0; i < numberOfCheckouts; i++) {
+                    Checkout checkout = new Checkout(false, true);
+                    checkouts.add(checkout);
+                    ObjectInstanceHandle checkoutInstanceHandler = registerObject();
+                    checkout.setHandler(checkoutInstanceHandler);
+                }
+            }
+
+            Event event = null;
+            if (!servicingCustomers.isEmpty()) {
+                event = servicingCustomers.getFirst();
+            }
+
+            if (event != null && event.getInteractionClassHandle().equals(this.enterCheckoutHandle)) {
+                int customerId = 0;
+                int checkoutId = 0;
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    if (parameter.equals(this.customerIdParameterHandleEnterCheckout)) {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        customerId = Utils.byteToInt(bytes);
+                    } else {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        checkoutId = Utils.byteToInt(bytes);
+                    }
+                }
+                servicingCustomer(customerId, checkoutId);
+                servicingCustomers.removeFirst();
+
+            }
+
+
+
+            if (!customersToExit.isEmpty()) {
+                event = customersToExit.getFirst();
+            }
+
+            if (event != null && event.getInteractionClassHandle().equals(this.payHandle)) {
+                int customerId = 0;
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    if (parameter.equals(this.customerIdParameterHandlePay)) {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        customerId = Utils.byteToInt(bytes);
+                    }
+                }
+                exitShop(customerId);
+                customersToExit.removeFirst();
+
+            }
+
 
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
@@ -127,8 +192,21 @@ public class CheckoutFederate
         enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
         rtiamb.subscribeInteractionClass(enterCheckoutHandle);
 
+        this.customerIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandle, "customerId");
+        this.checkoutIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandle, "checkoutId");
+
         createCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.CreateCheckout" );
         rtiamb.subscribeInteractionClass(createCheckoutHandle);
+
+        payHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.Pay" );
+        rtiamb.subscribeInteractionClass(payHandle);
+
+        this.customerIdParameterHandlePay = rtiamb.getParameterHandle(payHandle, "customerId");
+        this.checkoutIdParameterHandlePay = rtiamb.getParameterHandle(payHandle, "checkoutId");
+        this.priceParameterHandlePay = rtiamb.getParameterHandle(payHandle, "price");
+
+        this.exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
+        rtiamb.publishInteractionClass(exitShopHandle);
 
         log("Published and Subscribed");
     }
@@ -151,6 +229,30 @@ public class CheckoutFederate
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
+    }
+
+    private void servicingCustomer(int customerId, int checkoutId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(servicingCustomerHandle, "customerId");
+        ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(servicingCustomerHandle, "checkoutId");
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
+        parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( servicingCustomerHandle, parameters, generateTag(), time );
+
+        log("(ServicingCustomer) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + " time: "+ fedamb.federateTime);
+    }
+
+    private void exitShop(int customerId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(exitShopHandle, "customerId");
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( exitShopHandle, parameters, generateTag(), time );
+        log("(ExitShop) sent, customerId: " + customerId + " time: "+ fedamb.federateTime);
     }
 
     private void deleteObject( ObjectInstanceHandle handle ) throws RTIexception
