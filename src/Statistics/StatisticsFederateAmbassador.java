@@ -283,7 +283,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
 
             federate.statistics.clientsEnterQueueTimes.put(customerId, time);
         }
-        else if(interactionClass.equals(federate.payHandle)){
+        else if(interactionClass.equals(federate.payHandleWrapper.getHandle())){
             builder.append( " (Pay)" );
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
