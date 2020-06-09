@@ -218,6 +218,44 @@
                     <semantics>Średnia liczba klientów w kolejce (zaokrąglona w górę do części całkowitej)</semantics>
                 </attribute>
             </objectClass>
+			<objectClass>
+				<name>SimulationParameters</name>
+				<sharing>PublishSubscribe</sharing>
+				<semantics>parametry symulacji</semantics>
+				<attribute>
+					<name>maxQueueSize</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Maksymalna długość kolejki</semantics>
+				</attribute>
+				<attribute>
+					<name>percentageOfCustomersDoingSmallShopping</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Procent klientów kupujących do 5 produktów</semantics>
+				</attribute>
+				<attribute>
+					<name>initialNumberOfCheckouts</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>TimeStamp</order>
+					<semantics>Początkowa liczba kas </semantics>
+				</attribute>
+			</objectClass>
 		</objectClass>
 	</objects>
     <interactions>
