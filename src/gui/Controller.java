@@ -1,6 +1,7 @@
-package Manager.gui;
+package gui;
 
 import Manager.ManagerFederate;
+import Manager.SimulationParameters;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.layout.GridPane;
@@ -12,6 +13,7 @@ public class Controller {
     NumberTextField[] textFields;
 
     ManagerFederate managerFederate;
+
 
     @FXML
     void initialize () {
@@ -38,9 +40,11 @@ public class Controller {
 
     @FXML
     private void startSimulation(ActionEvent event) {
-//        this.textFields[0].getText();
-//        this.textFields[1].getText();
-//        this.textFields[2].getText();
+        SimulationParameters simulationParameters = new SimulationParameters();
+        simulationParameters.setMaxQueueSize(Integer.parseInt(this.textFields[0].getText()));
+        simulationParameters.setPercentageOfCustomersDoingSmallShopping(Integer.parseInt(this.textFields[1].getText()));
+        simulationParameters.setInitialNumberOfCheckouts(Integer.parseInt(this.textFields[2].getText()));
+        managerFederate.setSimulationParameters(simulationParameters);
         managerFederate.setSimulationStarted(true);
     }
 

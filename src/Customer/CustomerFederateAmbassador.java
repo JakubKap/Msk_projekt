@@ -14,19 +14,9 @@
  */
 package Customer;
 
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateHandleSet;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.LogicalTime;
-import hla.rti1516e.NullFederateAmbassador;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.OrderType;
-import hla.rti1516e.ParameterHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.SynchronizationPointFailureReason;
-import hla.rti1516e.TransportationTypeHandle;
+import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Event;
 import utils.Utils;
@@ -138,6 +128,9 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                                         String objectName )
             throws FederateInternalError
     {
+        if (theObjectClass.equals(federate.simulationParametersWrapper.getHandle())) {
+            federate.simulationParametersObjectInstanceHandle = theObject;
+        }
 //        log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
 //                theObjectClass + ", name=" + objectName );
     }
@@ -175,24 +168,49 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                                         SupplementalReflectInfo reflectInfo )
             throws FederateInternalError
     {
-//        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-//
-//        // print the handle
-//        builder.append( " handle=" + theObject );
-//        // print the tag
-//        builder.append( ", tag=" + new String(tag) );
-//        // print the time (if we have it) we'll get null if we are just receiving
-//        // a forwarded call from the other reflect callback above
-//        if( time != null )
-//        {
-//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-//        }
-//
-//        // print the attribute information
-//        builder.append( ", attributeCount=" + theAttributes.size() );
-//        builder.append( "\n" );
-//
-//        log( builder.toString() );
+        StringBuilder builder = new StringBuilder( "Reflection for object:" );
+
+        // print the handle
+        builder.append( " handle=" + theObject );
+        // print the tag
+        builder.append( ", tag=" + new String(tag) );
+        // print the time (if we have it) we'll get null if we are just receiving
+        // a forwarded call from the other reflect callback above
+        if( time != null )
+        {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+
+        // print the attribute information
+        builder.append( ", attributeCount=" + theAttributes.size() );
+        builder.append( "\n" );
+
+        if (theObject.equals(federate.simulationParametersObjectInstanceHandle)) {
+            for (AttributeHandle attribute : theAttributes.keySet()) {
+                int maxQueueSize = 0;
+                int percentageOfCustomersDoingSmallShopping = 0;
+                int initialNumberOfCheckouts = 0;
+                try {
+                    if (attribute.equals(federate.simulationParametersWrapper.getAttribute("maxQueueSize"))) {
+                        byte[] bytes = theAttributes.get(attribute);
+                        maxQueueSize = Utils.byteToInt(bytes);
+                        builder.append(", maxQueueSize = " + maxQueueSize);
+                    } else if (attribute.equals(federate.simulationParametersWrapper.getAttribute("percentageOfCustomersDoingSmallShopping"))) {
+                        byte[] bytes = theAttributes.get(attribute);
+                        percentageOfCustomersDoingSmallShopping = Utils.byteToInt(bytes);
+                        builder.append(", percentageOfCustomersDoingSmallShopping = " + percentageOfCustomersDoingSmallShopping);
+                    } else {
+                        byte[] bytes = theAttributes.get(attribute);
+                        initialNumberOfCheckouts = Utils.byteToInt(bytes);
+                        builder.append(", initialNumberOfCheckouts = " + initialNumberOfCheckouts);
+                    }
+                } catch (RTIexception rtIexception) {
+                    rtIexception.printStackTrace();
+                }
+            }
+        }
+
+        log( builder.toString() );
     }
 
     @Override

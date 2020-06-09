@@ -267,26 +267,6 @@
     			<transportation>HLAreliable</transportation>
     			<order>TimeStamp</order>
     			<semantics>Zdarzenie rozpoczynające symulację</semantics>
-    			<parameter>
-    				<name>maxQueueSize</name>
-    				<dataType>HLAinteger32BE</dataType>
-    				<semantics>Maksymalny rozmiar kolejki</semantics>
-    			</parameter>
-    			<parameter>
-    				<name>numberOfCustomers</name>
-    				<dataType>HLAinteger32BE</dataType>
-    				<semantics>Liczba wszystkich klientów biorących udział w symulacji</semantics>
-    			</parameter>
-    			<parameter>
-    				<name>percentageOfCustomersDoingSmallShopping</name>
-    				<dataType>HLAfloat32BE</dataType>
-    				<semantics>Procent wszystkich klientów biorących udział w symulacji (od 0.0 do 1.0)</semantics>
-    			</parameter>
-    			<parameter>
-    				<name>initialNumberOfCheckouts</name>
-    				<dataType>HLAinteger32BE</dataType>
-    				<semantics>Początkowa liczba kas w sklepie</semantics>
-    			</parameter>
     		</interactionClass>
     		<interactionClass>
     			<name>EndSimulation</name>

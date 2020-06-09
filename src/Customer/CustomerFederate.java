@@ -45,6 +45,9 @@ public class CustomerFederate
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
+    protected ObjectInstanceHandle simulationParametersObjectInstanceHandle;
+
+    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
     protected RtiObjectClassHandleWrapper queueHandleWrapper;
     protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
@@ -69,6 +72,7 @@ public class CustomerFederate
     protected ParameterHandle checkoutIdParameterHandlePay;
     protected ParameterHandle priceParameterHandlePay;
     private boolean simulationStarted;
+
 
     public void setSimulationStarted(boolean simulationStarted) {
         this.simulationStarted = simulationStarted;
@@ -171,17 +175,21 @@ public class CustomerFederate
     }
 
     private void publishAndSubscribe() throws RTIexception {
+        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
+        simulationParametersWrapper.addAttributes("maxQueueSize", "percentageOfCustomersDoingSmallShopping", "initialNumberOfCheckouts");
+        simulationParametersWrapper.subscribe();
+
         this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
         customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
         customerHandleWrapper.publish();
 
-        this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
-        this.queueHandleWrapper.addAttributes("id", "maxLimit", "customerListIds", "checkoutId");
-        this.queueHandleWrapper.subscribe();
+//        this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
+//        this.queueHandleWrapper.addAttributes("id", "maxLimit", "customerListIds", "checkoutId");
+//        this.queueHandleWrapper.subscribe();
 
-        this.checkoutHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Checkout");
-        checkoutHandleWrapper.addAttributes("id", "isPrivileged", "isFree");
-        checkoutHandleWrapper.subscribe();
+//        this.checkoutHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Checkout");
+//        checkoutHandleWrapper.addAttributes("id", "isPrivileged", "isFree");
+//        checkoutHandleWrapper.subscribe();
 
         this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
         this.enterShopHandleWrapper.publish();

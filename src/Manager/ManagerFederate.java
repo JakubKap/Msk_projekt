@@ -27,6 +27,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
+import utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -47,6 +48,7 @@ public class ManagerFederate extends Application {
     protected EncoderFactory encoderFactory;     // set when we join
 
     protected RtiObjectClassHandleWrapper statisticsHandleWrapper;
+    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiInteractionClassHandleWrapper startSimulationHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
@@ -56,8 +58,19 @@ public class ManagerFederate extends Application {
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
 
+
     private boolean simulationStarted = false;
     private boolean startSimulationInteractionSent = false;
+
+    private SimulationParameters simulationParameters;
+
+    public SimulationParameters getSimulationParameters() {
+        return simulationParameters;
+    }
+
+    public void setSimulationParameters(SimulationParameters simulationParameters) {
+        this.simulationParameters = simulationParameters;
+    }
 
     public boolean isSimulationStarted() {
         return simulationStarted;
@@ -98,6 +111,9 @@ public class ManagerFederate extends Application {
 //            updateAttributeValues(objectHandle);
             if (simulationStarted) {
                 startSimulation();
+                ObjectInstanceHandle simulationParametersInstanceHandler = registerObject();
+                simulationParameters.setHandler(simulationParametersInstanceHandler);
+                updateAttributeValues(simulationParameters);
                 simulationStarted = false;
             }
 
@@ -118,6 +134,11 @@ public class ManagerFederate extends Application {
                 "avgPayingDuration", "avgBeingInShopDuration", "avgBeingInQueueDuration", "avgBeingInCheckoutDuration",
                 "avgNumberOfProductsInBasket", "percentOfPrivilegedCheckouts", "avgNumberOfClientsInQueue");
         statisticsHandleWrapper.subscribe();
+
+        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
+        simulationParametersWrapper.addAttributes("maxQueueSize", "percentageOfCustomersDoingSmallShopping", "initialNumberOfCheckouts");
+        simulationParametersWrapper.publish();
+
 
         this.startSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StartSimulation");
         this.startSimulationHandleWrapper.publish();
@@ -145,18 +166,23 @@ public class ManagerFederate extends Application {
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
-        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(statisticsHandleWrapper.getHandle());
+        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(simulationParametersWrapper.getHandle());
         log("Registered Object, handle=" + objectInstanceHandle);
         return objectInstanceHandle;
     }
 
-    private void updateAttributeValues(ObjectInstanceHandle objectHandle) throws RTIexception {
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+    private void updateAttributeValues(SimulationParameters simulationParameters) throws RTIexception {
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(3);
 
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
+        byte[] initialNumberOfCheckouts = Utils.intToByte(encoderFactory, simulationParameters.getInitialNumberOfCheckouts());
+        byte[] maxQueueSize = Utils.intToByte(encoderFactory, simulationParameters.getMaxQueueSize());
+        byte[] percentageOfCustomersDoingSmallShopping = Utils.intToByte(encoderFactory, simulationParameters.getPercentageOfCustomersDoingSmallShopping());
 
+        attributes.put(simulationParametersWrapper.getAttribute("initialNumberOfCheckouts"), initialNumberOfCheckouts);
+        attributes.put(simulationParametersWrapper.getAttribute("maxQueueSize"), maxQueueSize);
+        attributes.put(simulationParametersWrapper.getAttribute("percentageOfCustomersDoingSmallShopping"), percentageOfCustomersDoingSmallShopping);
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
+        rtiamb.updateAttributeValues(simulationParameters.getHandler(), attributes, generateTag(), time);
     }
 
     private void startSimulation() throws RTIexception {
@@ -350,7 +376,7 @@ public class ManagerFederate extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Pane pane = FXMLLoader.load(getClass().getResource("gui/sample.fxml"));
+        Pane pane = FXMLLoader.load(getClass().getResource("../gui/sample.fxml"));
         primaryStage.setTitle("Hello World");
         Scene scene = new Scene(pane, 1280, 660);
         primaryStage.setScene(scene);
