@@ -68,7 +68,11 @@ public class CustomerFederate
     protected ParameterHandle customerIdParameterHandlePay;
     protected ParameterHandle checkoutIdParameterHandlePay;
     protected ParameterHandle priceParameterHandlePay;
+    private boolean simulationStarted;
 
+    public void setSimulationStarted(boolean simulationStarted) {
+        this.simulationStarted = simulationStarted;
+    }
 
     //----------------------------------------------------------
     //                    INSTANCE METHODS
@@ -96,38 +100,39 @@ public class CustomerFederate
 
         while( fedamb.isRunning)
         {
-            Customer customer = createCustomer();
+            if (simulationStarted) {
+                Customer customer = createCustomer();
 //            updateAttributeValues( objectHandle );
 
-            enterShop(customer.getId());
+                enterShop(customer.getId());
 //
-            updateCustomersWithBoughtProducts();
+                updateCustomersWithBoughtProducts();
 
-            Event event = null;
-            if (!servicingCustomers.isEmpty()) {
-                event = servicingCustomers.getFirst();
-            }
-
-            if (event != null && event.getInteractionClassHandle().equals(this.servicingCustomerHandleWrapper.getHandle())) {
-                int customerId = 0;
-                int checkoutId = 0;
-                int valueOfProducts = 0;
-                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                    if (parameter.equals(this.customerIdParameterHandleServicingCustomer)) {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        customerId = Utils.byteToInt(bytes);
-                    } else {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        checkoutId = Utils.byteToInt(bytes);
-                    }
+                Event event = null;
+                if (!servicingCustomers.isEmpty()) {
+                    event = servicingCustomers.getFirst();
                 }
-                Customer servicingCustomer = customers.get(customerId);
-                pay(customerId, checkoutId, servicingCustomer.getValueOfProducts());
-                servicingCustomers.removeFirst();
-            }
 
-            advanceTime( random.nextInt(9) + 1 );
+                if (event != null && event.getInteractionClassHandle().equals(this.servicingCustomerHandleWrapper.getHandle())) {
+                    int customerId = 0;
+                    int checkoutId = 0;
+                    int valueOfProducts = 0;
+                    ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                    for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                        if (parameter.equals(this.customerIdParameterHandleServicingCustomer)) {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            customerId = Utils.byteToInt(bytes);
+                        } else {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            checkoutId = Utils.byteToInt(bytes);
+                        }
+                    }
+                    Customer servicingCustomer = customers.get(customerId);
+                    pay(customerId, checkoutId, servicingCustomer.getValueOfProducts());
+                    servicingCustomers.removeFirst();
+                }
+            }
+            advanceTime(random.nextInt(9) + 1);
         }
 
         deleteObject();

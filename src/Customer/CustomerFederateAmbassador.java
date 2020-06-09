@@ -230,7 +230,10 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "customer federate - Interaction Received:" );
 
-        if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
+        if( interactionClass.equals(federate.startSimulationHandleWrapper.getHandle())) {
+            builder.append(" (StartSimulation) received");
+            federate.setSimulationStarted(true);
+        } else if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
         {
             builder.append( " (EndShopping) received" );
             int customerId = 0;

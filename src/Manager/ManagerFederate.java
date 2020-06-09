@@ -14,17 +14,17 @@
  */
 package Manager;
 
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.CallbackModel;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.RTIambassador;
-import hla.rti1516e.ResignAction;
-import hla.rti1516e.RtiFactoryFactory;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
 
@@ -35,7 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 @SuppressWarnings("Duplicates")
-public class ManagerFederate {
+public class ManagerFederate extends Application {
     /**
      * The sync point all federates will sync up on before starting
      */
@@ -55,6 +55,17 @@ public class ManagerFederate {
     protected RtiInteractionClassHandleWrapper servicingCustomerHandleWrapper;
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
+
+    private boolean simulationStarted = false;
+    private boolean startSimulationInteractionSent = false;
+
+    public boolean isSimulationStarted() {
+        return simulationStarted;
+    }
+
+    public void setSimulationStarted(boolean simulationStarted) {
+        this.simulationStarted = simulationStarted;
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
@@ -85,6 +96,10 @@ public class ManagerFederate {
 
         while (fedamb.isRunning) {
 //            updateAttributeValues(objectHandle);
+            if (simulationStarted) {
+                startSimulation();
+                simulationStarted = false;
+            }
 
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
@@ -94,6 +109,8 @@ public class ManagerFederate {
         resignFederation();
         destroyFederation();
     }
+
+
 
     private void publishAndSubscribe() throws RTIexception {
         this.statisticsHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Statistics");
@@ -105,26 +122,26 @@ public class ManagerFederate {
         this.startSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StartSimulation");
         this.startSimulationHandleWrapper.publish();
 
-        this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
-        this.enterShopHandleWrapper.subscribe();
-
-        this.enterQueueHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterQueue");
-        this.enterQueueHandleWrapper.subscribe();
-
-        this.enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterCheckout");
-        this.enterCheckoutHandleWrapper.subscribe();
-
-        this.createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.CreateCheckout");
-        this.createCheckoutHandleWrapper.subscribe();
-
-        this.servicingCustomerHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ServicingCustomer");
-        this.servicingCustomerHandleWrapper.subscribe();
-
-        this.payHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.Pay");
-        this.payHandleWrapper.subscribe();
-
-        this.exitShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ExitShop");
-        this.exitShopHandleWrapper.subscribe();
+//        this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
+//        this.enterShopHandleWrapper.subscribe();
+//
+//        this.enterQueueHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterQueue");
+//        this.enterQueueHandleWrapper.subscribe();
+//
+//        this.enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterCheckout");
+//        this.enterCheckoutHandleWrapper.subscribe();
+//
+//        this.createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.CreateCheckout");
+//        this.createCheckoutHandleWrapper.subscribe();
+//
+//        this.servicingCustomerHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ServicingCustomer");
+//        this.servicingCustomerHandleWrapper.subscribe();
+//
+//        this.payHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.Pay");
+//        this.payHandleWrapper.subscribe();
+//
+//        this.exitShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ExitShop");
+//        this.exitShopHandleWrapper.subscribe();
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
@@ -140,6 +157,15 @@ public class ManagerFederate {
 
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
         rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
+    }
+
+    private void startSimulation() throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( startSimulationHandleWrapper.getHandle(), parameters, generateTag(), time );
+
+        log("(StartSimulation) sent" + fedamb.federateTime);
     }
 
     private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
@@ -319,12 +345,18 @@ public class ManagerFederate {
             federateName = args[0];
         }
 
-        try {
-            // run the example federate
-            new ManagerFederate().runFederate(federateName);
-        } catch (Exception rtie) {
-            // an exception occurred, just log the information and exit
-            rtie.printStackTrace();
-        }
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        Pane pane = FXMLLoader.load(getClass().getResource("gui/sample.fxml"));
+        primaryStage.setTitle("Hello World");
+        Scene scene = new Scene(pane, 1280, 660);
+        primaryStage.setScene(scene);
+//        primaryStage.setMaximized(true);
+        primaryStage.show();
+
+        pane.setId("pane");
     }
 }
