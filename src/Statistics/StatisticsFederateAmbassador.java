@@ -233,7 +233,8 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
     {
         StringBuilder builder = new StringBuilder( "Interaction ");
 
-        if (interactionClass.equals(federate.enterShopHandle)) {
+        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()) )
+        {
             builder.append( " (EnterShop)" );
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
@@ -247,7 +248,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             }
 
             federate.statistics.clientsEnterShopTimes.put(customerId, time);
-        } else if (interactionClass.equals(federate.exitShopHandle)) {
+        } else if (interactionClass.equals(federate.exitShopHandleWrapper.getHandle())) {
             builder.append( " (ExitShop)" );
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
@@ -257,7 +258,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             }
 
             federate.statistics.clientsExitShopTimes.put(customerId, time);
-        } else if (interactionClass.equals(federate.enterCheckoutHandle)) {
+        } else if (interactionClass.equals(federate.enterCheckoutHandleWrapper.getHandle())) {
             builder.append( " (EnterCheckout)" );
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
@@ -269,7 +270,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             }
 
             federate.statistics.clientsEnterCheckoutTimes.put(customerId, time);
-        } else if (interactionClass.equals(federate.enterQueueHandle)) {
+        } else if (interactionClass.equals(federate.enterQueueHandleWrapper.getHandle())) {
             builder.append( " (EnterQueue)" );
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
