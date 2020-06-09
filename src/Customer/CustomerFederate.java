@@ -55,13 +55,19 @@ public class CustomerFederate
     protected RtiInteractionClassHandleWrapper servicingCustomerHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
 
-    public LinkedList<Event> eventList = new LinkedList<>();
+    public LinkedList<Event> doingShoppingCustomers = new LinkedList<>();
+    public LinkedList<Event> servicingCustomers = new LinkedList<>();
     private static Random random = new Random();
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     private List<Customer> customers = new ArrayList<>();
-    protected ParameterHandle customerIdParameterHandle;
-    protected ParameterHandle numberOfProductsInBasketParameterHandle;
-    protected ParameterHandle valueOfProductsParameterHandle;
+    protected ParameterHandle customerIdParameterHandleEndShopping;
+    protected ParameterHandle numberOfProductsInBasketParameterHandleEndShopping;
+    protected ParameterHandle valueOfProductsParameterHandleEndShopping;
+    protected ParameterHandle customerIdParameterHandleServicingCustomer;
+    protected ParameterHandle checkoutIdParameterHandleServicingCustomer;
+    protected ParameterHandle customerIdParameterHandlePay;
+    protected ParameterHandle checkoutIdParameterHandlePay;
+    protected ParameterHandle priceParameterHandlePay;
 
 
     //----------------------------------------------------------
@@ -97,6 +103,30 @@ public class CustomerFederate
 //
             updateCustomersWithBoughtProducts();
 
+            Event event = null;
+            if (!servicingCustomers.isEmpty()) {
+                event = servicingCustomers.getFirst();
+            }
+
+            if (event != null && event.getInteractionClassHandle().equals(this.servicingCustomerHandleWrapper.getHandle())) {
+                int customerId = 0;
+                int checkoutId = 0;
+                int valueOfProducts = 0;
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    if (parameter.equals(this.customerIdParameterHandleServicingCustomer)) {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        customerId = Utils.byteToInt(bytes);
+                    } else {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        checkoutId = Utils.byteToInt(bytes);
+                    }
+                }
+                Customer servicingCustomer = customers.get(customerId);
+                pay(customerId, checkoutId, servicingCustomer.getValueOfProducts());
+                servicingCustomers.removeFirst();
+            }
+
             advanceTime( random.nextInt(9) + 1 );
         }
 
@@ -107,8 +137,8 @@ public class CustomerFederate
 
     private void updateCustomersWithBoughtProducts() throws RTIexception {
         Event event = null;
-        if (!eventList.isEmpty()) {
-            event = eventList.getFirst();
+        if (!doingShoppingCustomers.isEmpty()) {
+            event = doingShoppingCustomers.getFirst();
         }
 
         if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
@@ -117,10 +147,10 @@ public class CustomerFederate
             int valueOfProducts = 0;
             ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
             for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                if (parameter.equals(this.customerIdParameterHandle)) {
+                if (parameter.equals(this.customerIdParameterHandleEndShopping)) {
                     byte[] bytes = parameterHandleValueMap.get(parameter);
                     customerId = Utils.byteToInt(bytes);
-                } else if (parameter.equals(this.numberOfProductsInBasketParameterHandle)){
+                } else if (parameter.equals(this.numberOfProductsInBasketParameterHandleEndShopping)){
                     byte[] bytes = parameterHandleValueMap.get(parameter);
                     numberOfProductsInBasket = Utils.byteToInt(bytes);
                 } else {
@@ -131,7 +161,7 @@ public class CustomerFederate
             Customer customer = customers.get(customerId);
             updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
             enterQueue(customerId);
-            eventList.removeFirst();
+            doingShoppingCustomers.removeFirst();
         }
     }
 
@@ -157,18 +187,25 @@ public class CustomerFederate
         this.payHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.Pay");
         this.payHandleWrapper.publish();
 
+        this.customerIdParameterHandlePay = rtiamb.getParameterHandle(payHandleWrapper.getHandle(), "customerId");
+        this.checkoutIdParameterHandlePay = rtiamb.getParameterHandle(payHandleWrapper.getHandle(), "checkoutId");
+        this.priceParameterHandlePay = rtiamb.getParameterHandle(payHandleWrapper.getHandle(), "price");
+
         this.startSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StartSimulation");
         this.startSimulationHandleWrapper.subscribe();
 
         this.endShoppingHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EndShopping");
         this.endShoppingHandleWrapper.subscribe();
 
-        this.customerIdParameterHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "customerId");
-        this.numberOfProductsInBasketParameterHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "numberOfProductsInBasket");
-        this.valueOfProductsParameterHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "valueOfProducts");
+        this.customerIdParameterHandleEndShopping = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "customerId");
+        this.numberOfProductsInBasketParameterHandleEndShopping = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "numberOfProductsInBasket");
+        this.valueOfProductsParameterHandleEndShopping = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "valueOfProducts");
 
         this.servicingCustomerHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ServicingCustomer");
         this.servicingCustomerHandleWrapper.subscribe();
+
+        this.customerIdParameterHandleServicingCustomer = rtiamb.getParameterHandle(servicingCustomerHandleWrapper.getHandle(), "customerId");
+        this.checkoutIdParameterHandleServicingCustomer = rtiamb.getParameterHandle(servicingCustomerHandleWrapper.getHandle(), "checkoutId");
 
         this.exitShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ExitShop");
         this.exitShopHandleWrapper.subscribe();
@@ -198,6 +235,9 @@ public class CustomerFederate
         attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasketArray);
         attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProductsArray);
 
+        customer.setValueOfProducts(valueOfProducts);
+        customer.setNumberOfProductsInBasket(numberOfProductsInBasket);
+
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
         rtiamb.updateAttributeValues(customer.getHandler(), attributes, generateTag(), time);
 
@@ -224,18 +264,30 @@ public class CustomerFederate
     }
 
     private void enterQueue(int customerId) throws RTIexception {
-        InteractionClassHandle interactionHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterQueue");
-
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
-        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(interactionHandle, "customerId");
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "customerId");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
-        rtiamb.sendInteraction( interactionHandle, parameters, generateTag(), time );
+        rtiamb.sendInteraction( enterQueueHandleWrapper.getHandle(), parameters, generateTag(), time );
         log("(EnterQueue) sent, customerId: " + customerId + " time: "+ fedamb.federateTime);
     }
 
+    private void pay(int customerId, int checkoutId, int valueOfProducts) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(3);
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(payHandleWrapper.getHandle(), "customerId");
+        ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(payHandleWrapper.getHandle(), "checkoutId");
+        ParameterHandle priceHandle = rtiamb.getParameterHandle(payHandleWrapper.getHandle(), "price");
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
+        parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory , checkoutId));
+        parameters.put(priceHandle, Utils.intToByte(encoderFactory , valueOfProducts));
+
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( payHandleWrapper.getHandle(), parameters, generateTag(), time );
+        log("(Pay) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + ", price: " + valueOfProducts +  " time: "+ fedamb.federateTime);
+    }
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////

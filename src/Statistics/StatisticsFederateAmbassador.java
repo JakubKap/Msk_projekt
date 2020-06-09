@@ -31,6 +31,7 @@ import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import utils.Event;
 import utils.Utils;
 
 /**
@@ -235,13 +236,54 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
         if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()) )
         {
             builder.append( " (EnterShop)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                //TODO obsluz interakajca StopSimulation
+                if (customerId >= 10) {
+                    this.isRunning = false;
+                }
+                builder.append(" received, customerId = " + customerId);
+            }
+
+            federate.statistics.clientsEnterShopTimes.put(customerId, time);
+        } else if (interactionClass.equals(federate.exitShopHandleWrapper.getHandle())) {
+            builder.append( " (ExitShop)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                byte[] bytes = theParameters.get(parameter);
+                customerId = Utils.byteToInt(bytes);
+                builder.append(" received, customerId = " + customerId);
+            }
+
+            federate.statistics.clientsExitShopTimes.put(customerId, time);
+        } else if (interactionClass.equals(federate.enterCheckoutHandleWrapper.getHandle())) {
+            builder.append( " (EnterCheckout)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                if (parameter.equals(federate.customerIdParameterHandleEnterCheckout)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    builder.append(", customerId = " + customerId);
+                }
+            }
+
+            federate.statistics.clientsEnterCheckoutTimes.put(customerId, time);
+        } else if (interactionClass.equals(federate.enterQueueHandleWrapper.getHandle())) {
+            builder.append( " (EnterQueue)" );
+            int customerId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                if (parameter.equals(federate.customerIdParameterHandleEnterQueue)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    builder.append(", customerId = " + customerId);
+                }
+            }
+
+            federate.statistics.clientsEnterQueueTimes.put(customerId, time);
         }
 
-        for(ParameterHandle parameter : theParameters.keySet()){
-            byte[] bytes = theParameters.get(parameter);
-            int customerId = Utils.byteToInt(bytes);
-            builder.append(" received, klientId = " + customerId);
-        }
 
         // print the handle
 

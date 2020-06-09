@@ -195,6 +195,7 @@ public class QueueFederate
                 int numberOfQueue = random.nextInt(queues.size());
                 Queue queue= queues.get(numberOfQueue);
                 updateAttributeValues(queue, customerId);
+                enterCheckout(customerId, queue.getCheckoutId());
                 customersIds.removeFirst();
             }
 
@@ -283,7 +284,7 @@ public class QueueFederate
         enterQueueHandleWrapper.subscribe();
 
         this.enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterCheckout");
-        this.enterCheckoutHandleWrapper.subscribe();
+        this.enterCheckoutHandleWrapper.publish();
     }
 
     /**
@@ -320,6 +321,19 @@ public class QueueFederate
         rtiamb.updateAttributeValues(queue.getHandler(), attributes, generateTag(), time);
 
         log("Customer: " + numberOfClient + " was added to queue: " + queue.getId());
+    }
+
+    private void enterCheckout(int customerId, int checkoutId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
+        ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
+        ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "checkoutId");
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
+        parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( enterCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time );
+
+        log("(EnterCheckout) sent, customerId: "+ customerId + ", checkoutId: " + checkoutId + " time: "+ fedamb.federateTime);
     }
 
     /**

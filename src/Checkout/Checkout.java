@@ -1,12 +1,16 @@
 package Checkout;
 
+import hla.rti1516e.ObjectInstanceHandle;
+
 public class Checkout {
     private int id;
     private boolean isPrivileged;
     private boolean isFree;
+    private static int currentId = 0;
+    private ObjectInstanceHandle handler;
 
-    public Checkout(int id, boolean isPrivileged, boolean isFree) {
-        this.id = id;
+    public Checkout(boolean isPrivileged, boolean isFree) {
+        this.id = currentId++;
         this.isPrivileged = isPrivileged;
         this.isFree = isFree;
     }
@@ -33,5 +37,9 @@ public class Checkout {
 
     public void setFree(boolean free) {
         isFree = free;
+    }
+
+    public void setHandler(ObjectInstanceHandle handler) {
+        this.handler = handler;
     }
 }

@@ -20,6 +20,7 @@ import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.ResignAction;
 import hla.rti1516e.RtiFactoryFactory;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
@@ -56,6 +57,11 @@ public class StatisticsFederate
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
 
+    public ParameterHandle customerIdParameterHandleEnterCheckout;
+    public ParameterHandle customerIdParameterHandleEnterQueue;
+
+    protected Statistics statistics = new Statistics();
+
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -91,6 +97,9 @@ public class StatisticsFederate
             log( "Time Advanced to " + fedamb.federateTime );
         }
 
+        System.out.println("AvgBeingInShopDuration: " + statistics.getAvgBeingInShopDuration());
+        System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
+
 //        deleteObject(objectHandle);
         resignFederation();
         destroyFederation();
@@ -121,8 +130,12 @@ public class StatisticsFederate
         enterQueueHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.EnterQueue");
         enterQueueHandleWrapper.subscribe();
 
+        customerIdParameterHandleEnterQueue = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "customerId");
+
         enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.EnterCheckout");
         enterCheckoutHandleWrapper.subscribe();
+
+        customerIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
 
         servicingCustomerHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.ServicingCustomer");
         servicingCustomerHandleWrapper.subscribe();
