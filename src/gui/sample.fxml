@@ -50,7 +50,7 @@
                 </GridPane>
                 <HBox alignment="CENTER" prefHeight="64.0" prefWidth="411.0">
                     <children>
-                        <Button mnemonicParsing="false" onAction="#startSimulation" text="start simulation">
+                        <Button fx:id= "startSimulationBtn" mnemonicParsing="false" onAction="#startSimulation" text="start simulation">
                             <opaqueInsets>
                                 <Insets />
                             </opaqueInsets>
@@ -58,7 +58,7 @@
                                 <Insets right="5.0" />
                             </HBox.margin>
                         </Button>
-                        <Button mnemonicParsing="false" onAction="#stopSimulation" text="stop simulation">
+                        <Button fx:id= "stopSimulationBtn" mnemonicParsing="false" onAction="#stopSimulation" text="stop simulation">
                             <HBox.margin>
                                 <Insets left="5.0" />
                             </HBox.margin>

@@ -4,11 +4,18 @@ import Manager.ManagerFederate;
 import Manager.SimulationParameters;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 
 public class Controller {
     @FXML
     GridPane gridPane;
+
+    @FXML
+    Button startSimulationBtn;
+
+    @FXML
+    Button stopSimulationBtn;
 
     NumberTextField[] textFields;
 
@@ -22,7 +29,16 @@ public class Controller {
             textFields[i] = new NumberTextField();
             this.gridPane.add(textFields[i], 1, i, 1, 1);
         }
+
+        disiableStartStopSimulationBtns(true);
+
         new Manager().start();
+
+        for (NumberTextField textField : textFields) {
+            textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                startSimulationBtn.setDisable(!areAllParametersSet(textField));
+            });
+        }
     }
 
     class Manager extends Thread {
@@ -36,6 +52,23 @@ public class Controller {
                 rtie.printStackTrace();
             }
         }
+    }
+
+    private void disiableStartStopSimulationBtns(boolean value){
+        startSimulationBtn.setDisable(value);
+        stopSimulationBtn.setDisable(value);
+    }
+
+    private boolean areAllParametersSet(NumberTextField currentTextField){
+        if(currentTextField.getText().isEmpty())
+            return false;
+
+        for (NumberTextField textField : textFields) {
+            if(textField.getText().isEmpty())
+                return false;
+        }
+
+        return true;
     }
 
     @FXML
