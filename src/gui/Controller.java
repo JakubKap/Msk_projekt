@@ -30,7 +30,7 @@ public class Controller {
             this.gridPane.add(textFields[i], 1, i, 1, 1);
         }
 
-        disiableStartStopSimulationBtns(true);
+        disableStartStopSimulationBtns(true);
 
         new Manager().start();
 
@@ -54,7 +54,7 @@ public class Controller {
         }
     }
 
-    private void disiableStartStopSimulationBtns(boolean value){
+    private void disableStartStopSimulationBtns(boolean value){
         startSimulationBtn.setDisable(value);
         stopSimulationBtn.setDisable(value);
     }
@@ -71,6 +71,12 @@ public class Controller {
         return true;
     }
 
+    private void clearTextFields(){
+        for (NumberTextField textField : textFields) {
+            textField.clear();
+        }
+    }
+
     @FXML
     private void startSimulation(ActionEvent event) {
         SimulationParameters simulationParameters = new SimulationParameters();
@@ -79,10 +85,13 @@ public class Controller {
         simulationParameters.setInitialNumberOfCheckouts(Integer.parseInt(this.textFields[2].getText()));
         managerFederate.setSimulationParameters(simulationParameters);
         managerFederate.setSimulationStarted(true);
+        stopSimulationBtn.setDisable(false);
+        startSimulationBtn.setDisable(true);
     }
 
     @FXML
     private void stopSimulation(ActionEvent event) {
-
+        disableStartStopSimulationBtns(true);
+        clearTextFields();
     }
 }
