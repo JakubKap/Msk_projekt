@@ -14,19 +14,9 @@
  */
 package Queue;
 
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateHandleSet;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.LogicalTime;
-import hla.rti1516e.NullFederateAmbassador;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.OrderType;
-import hla.rti1516e.ParameterHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.SynchronizationPointFailureReason;
-import hla.rti1516e.TransportationTypeHandle;
+import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Event;
 import utils.Utils;
@@ -140,6 +130,10 @@ class QueueFederateAmbassador extends NullFederateAmbassador
     {
 //        log( "QueueAmbassador - Discoverd Object: handle=" + theObject + ", classHandle=" +
 //                theObjectClass + ", name=" + objectName );
+
+        if (theObjectClass.equals(federate.simulationParametersWrapper.getHandle())) {
+            federate.simulationParametersObjectInstanceHandle = theObject;
+        }
     }
 
     @Override
@@ -175,24 +169,50 @@ class QueueFederateAmbassador extends NullFederateAmbassador
                                         SupplementalReflectInfo reflectInfo )
             throws FederateInternalError
     {
-//        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-//
-//        // print the handle
-//        builder.append( " handle=" + theObject );
-//        // print the tag
-//        builder.append( ", tag=" + new String(tag) );
-//        // print the time (if we have it) we'll get null if we are just receiving
-//        // a forwarded call from the other reflect callback above
-//        if( time != null )
-//        {
-//            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-//        }
-//
-//        // print the attribute information
-//        builder.append( ", attributeCount=" + theAttributes.size() );
-//        builder.append( "\n" );
-//
-//        log( builder.toString() );
+        StringBuilder builder = new StringBuilder( "Reflection for object:" );
+
+        // print the handle
+        builder.append( " handle=" + theObject );
+        // print the tag
+        builder.append( ", tag=" + new String(tag) );
+        // print the time (if we have it) we'll get null if we are just receiving
+        // a forwarded call from the other reflect callback above
+        if( time != null )
+        {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+
+        // print the attribute information
+        builder.append( ", attributeCount=" + theAttributes.size() );
+        builder.append( "\n" );
+
+        int maxQueueSize;
+        int initialNumberOfCheckouts;
+
+        if(theObject.equals(this.federate.simulationParametersObjectInstanceHandle)) {
+            for (AttributeHandle attribute : theAttributes.keySet()) {
+                try {
+                    if (attribute.equals
+                            (this.federate.simulationParametersWrapper.getAttribute("maxQueueSize"))) {
+                        byte[] bytes = theAttributes.get(attribute);
+                        maxQueueSize = Utils.byteToInt(bytes);
+                        this.federate.maxQueueSize = maxQueueSize;
+                        builder.append(" received, maxQueueSize = " + maxQueueSize);
+                    }
+                    else if (attribute.equals
+                            (this.federate.simulationParametersWrapper.getAttribute("initialNumberOfCheckouts"))){
+                        byte[] bytes = theAttributes.get(attribute);
+                        initialNumberOfCheckouts = Utils.byteToInt(bytes);
+                        this.federate.numberOfQueues = initialNumberOfCheckouts;
+                        builder.append(" received, initialNumberOfCheckouts = " + initialNumberOfCheckouts);
+                    }
+                } catch (RTIexception rtIexception) {
+                    rtIexception.printStackTrace();
+                }
+            }
+        }
+
+        log( builder.toString() );
     }
 
     @Override

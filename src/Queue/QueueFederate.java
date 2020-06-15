@@ -54,15 +54,18 @@ public class QueueFederate
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
+    protected ObjectInstanceHandle simulationParametersObjectInstanceHandle;
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
     protected RtiObjectClassHandleWrapper queueHandleWrapper;
     protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterCheckoutHandleWrapper;
-    public int numberOfQueues = 5;
+    public int numberOfQueues;
+    public int maxQueueSize;
     public List<Queue> queues;
     public LinkedList<Integer> customersIds = new LinkedList<>();
     private Random random = new Random();
+    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
 
     /**
      * This is just a helper method to make sure all logging it output in the same form
@@ -174,11 +177,11 @@ public class QueueFederate
         while( fedamb.isRunning )
         {
 //            updateAttributeValues( objectHandle );
-
+        if(numberOfQueues != 0) {
             if (queues == null) {
                 queues = new ArrayList<>();
                 for (int i = 0; i < numberOfQueues; i++) {
-                    int maxQueueSize = new Random().nextInt(5) + 3;
+                    maxQueueSize = new Random().nextInt(5) + 3;
                     Queue queue = new Queue(maxQueueSize);
                     queues.add(queue);
                     ObjectInstanceHandle customerInstanceHandler = registerObject();
@@ -193,12 +196,12 @@ public class QueueFederate
 
             if (customerId != null) {
                 int numberOfQueue = random.nextInt(queues.size());
-                Queue queue= queues.get(numberOfQueue);
+                Queue queue = queues.get(numberOfQueue);
                 updateAttributeValues(queue, customerId);
                 enterCheckout(customerId, queue.getCheckoutId());
                 customersIds.removeFirst();
             }
-
+        }
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
         }
@@ -285,6 +288,11 @@ public class QueueFederate
 
         this.enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterCheckout");
         this.enterCheckoutHandleWrapper.publish();
+
+        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
+        simulationParametersWrapper.addAttributes("maxQueueSize", "initialNumberOfCheckouts");
+        simulationParametersWrapper.subscribe();
+
     }
 
     /**
