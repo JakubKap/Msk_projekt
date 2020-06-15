@@ -181,7 +181,6 @@ public class QueueFederate
             if (queues == null) {
                 queues = new ArrayList<>();
                 for (int i = 0; i < numberOfQueues; i++) {
-                    maxQueueSize = new Random().nextInt(5) + 3;
                     Queue queue = new Queue(maxQueueSize);
                     queues.add(queue);
                     ObjectInstanceHandle customerInstanceHandler = registerObject();
