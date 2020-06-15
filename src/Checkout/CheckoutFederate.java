@@ -21,6 +21,7 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import rtiHelperClasses.RtiObjectClassHandleWrapper;
 import utils.Event;
 import utils.Utils;
 
@@ -48,6 +49,7 @@ public class CheckoutFederate
     protected AttributeHandle checkoutIdHandle;
     protected AttributeHandle isPrivilegedHandle;
     protected AttributeHandle isFreeHandle;
+    protected ObjectInstanceHandle simulationParametersObjectInstanceHandle;
 
     protected ParameterHandle customerIdParameterHandleEnterCheckout;
     protected ParameterHandle checkoutIdParameterHandleEnterCheckout;
@@ -63,10 +65,12 @@ public class CheckoutFederate
     protected ParameterHandle priceParameterHandlePay;
 
 
-    public int numberOfCheckouts = 5;
+    public int numberOfCheckouts;
     public List<Checkout> checkouts;
     public LinkedList<Event> servicingCustomers = new LinkedList<>();
     public LinkedList<Event> customersToExit = new LinkedList<>();
+    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
+    private Random random = new Random();
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -97,60 +101,60 @@ public class CheckoutFederate
         ObjectInstanceHandle objectHandle = registerObject();
 
         while( fedamb.isRunning ) {
-            if (checkouts == null) {
-                checkouts = new ArrayList<>();
-                for (int i = 0; i < numberOfCheckouts; i++) {
-                    Checkout checkout = new Checkout(false, true);
-                    checkouts.add(checkout);
-                    ObjectInstanceHandle checkoutInstanceHandler = registerObject();
-                    checkout.setHandler(checkoutInstanceHandler);
-                }
-            }
-
-            Event event = null;
-            if (!servicingCustomers.isEmpty()) {
-                event = servicingCustomers.getFirst();
-            }
-
-            if (event != null && event.getInteractionClassHandle().equals(this.enterCheckoutHandle)) {
-                int customerId = 0;
-                int checkoutId = 0;
-                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                    if (parameter.equals(this.customerIdParameterHandleEnterCheckout)) {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        customerId = Utils.byteToInt(bytes);
-                    } else {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        checkoutId = Utils.byteToInt(bytes);
+            if(numberOfCheckouts != 0) {
+                if (checkouts == null) {
+                    checkouts = new ArrayList<>();
+                    for (int i = 0; i < numberOfCheckouts; i++) {
+                        Checkout checkout = new Checkout(random.nextBoolean(), true);
+                        checkouts.add(checkout);
+                        ObjectInstanceHandle checkoutInstanceHandler = registerObject();
+                        checkout.setHandler(checkoutInstanceHandler);
                     }
                 }
-                servicingCustomer(customerId, checkoutId);
-                servicingCustomers.removeFirst();
 
-            }
-
-
-
-            if (!customersToExit.isEmpty()) {
-                event = customersToExit.getFirst();
-            }
-
-            if (event != null && event.getInteractionClassHandle().equals(this.payHandle)) {
-                int customerId = 0;
-                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                    if (parameter.equals(this.customerIdParameterHandlePay)) {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        customerId = Utils.byteToInt(bytes);
-                    }
+                Event event = null;
+                if (!servicingCustomers.isEmpty()) {
+                    event = servicingCustomers.getFirst();
                 }
-                exitShop(customerId);
-                customersToExit.removeFirst();
+
+                if (event != null && event.getInteractionClassHandle().equals(this.enterCheckoutHandle)) {
+                    int customerId = 0;
+                    int checkoutId = 0;
+                    ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                    for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                        if (parameter.equals(this.customerIdParameterHandleEnterCheckout)) {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            customerId = Utils.byteToInt(bytes);
+                        } else {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            checkoutId = Utils.byteToInt(bytes);
+                        }
+                    }
+                    servicingCustomer(customerId, checkoutId);
+                    servicingCustomers.removeFirst();
+
+                }
+
+
+                if (!customersToExit.isEmpty()) {
+                    event = customersToExit.getFirst();
+                }
+
+                if (event != null && event.getInteractionClassHandle().equals(this.payHandle)) {
+                    int customerId = 0;
+                    ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                    for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                        if (parameter.equals(this.customerIdParameterHandlePay)) {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            customerId = Utils.byteToInt(bytes);
+                        }
+                    }
+                    exitShop(customerId);
+                    customersToExit.removeFirst();
+
+                }
 
             }
-
-
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
         }
@@ -207,6 +211,10 @@ public class CheckoutFederate
 
         this.exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
         rtiamb.publishInteractionClass(exitShopHandle);
+
+        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
+        simulationParametersWrapper.addAttributes("initialNumberOfCheckouts");
+        simulationParametersWrapper.subscribe();
 
         log("Published and Subscribed");
     }

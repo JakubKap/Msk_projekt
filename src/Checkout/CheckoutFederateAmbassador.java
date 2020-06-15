@@ -14,19 +14,9 @@
  */
 package Checkout;
 
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateHandleSet;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.LogicalTime;
-import hla.rti1516e.NullFederateAmbassador;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.OrderType;
-import hla.rti1516e.ParameterHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.SynchronizationPointFailureReason;
-import hla.rti1516e.TransportationTypeHandle;
+import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Event;
 import utils.Utils;
@@ -140,6 +130,10 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador
     {
         log( "Discoverd Object: handle=" + theObject + ", classHandle=" +
                 theObjectClass + ", name=" + objectName );
+
+        if (theObjectClass.equals(federate.simulationParametersWrapper.getHandle())) {
+            federate.simulationParametersObjectInstanceHandle = theObject;
+        }
     }
 
     @Override
@@ -191,6 +185,22 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador
         // print the attribute information
         builder.append( ", attributeCount=" + theAttributes.size() );
         builder.append( "\n" );
+
+        if(theObject.equals(this.federate.simulationParametersObjectInstanceHandle)) {
+            for (AttributeHandle attribute : theAttributes.keySet()) {
+                try {
+                    if (attribute.equals
+                            (this.federate.simulationParametersWrapper.getAttribute("initialNumberOfCheckouts"))) {
+                        byte[] bytes = theAttributes.get(attribute);
+                        int numberOfCheckouts = Utils.byteToInt(bytes);
+                        this.federate.numberOfCheckouts = numberOfCheckouts;
+                        builder.append(" received, numberOfCheckouts = " + numberOfCheckouts);
+                    }
+                } catch (RTIexception rtIexception) {
+                    rtIexception.printStackTrace();
+                }
+            }
+        }
 
         log( builder.toString() );
     }
