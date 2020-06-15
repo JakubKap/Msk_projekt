@@ -15,6 +15,12 @@ public class Checkout {
         this.isFree = isFree;
     }
 
+    public Checkout(int checkoutId, boolean isPrivileged, boolean isFree) {
+        this.id = checkoutId;
+        this.isPrivileged = isPrivileged;
+        this.isFree = isFree;
+    }
+
     public int getId() {
         return id;
     }
@@ -41,5 +47,9 @@ public class Checkout {
 
     public void setHandler(ObjectInstanceHandle handler) {
         this.handler = handler;
+    }
+
+    public ObjectInstanceHandle getHandler() {
+        return handler;
     }
 }

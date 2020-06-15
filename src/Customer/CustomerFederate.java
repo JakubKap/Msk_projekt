@@ -173,7 +173,7 @@ public class CustomerFederate
             }
             Customer customer = customers.get(customerId);
             updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
-            enterQueue(customerId);
+            enterQueue(customerId, customer.getNumberOfProductsInBasket());
             doingShoppingCustomers.removeFirst();
         }
     }
@@ -280,15 +280,18 @@ public class CustomerFederate
         log("(EnterShop) sent, customerId: "+ customerId + " time: "+ fedamb.federateTime);
     }
 
-    private void enterQueue(int customerId) throws RTIexception {
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+    private void enterQueue(int customerId, int numberOfProductsInBasket) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "customerId");
+        ParameterHandle numberOfProductsInBasketHandle = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "numberOfProductsInBasket");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
+        parameters.put(numberOfProductsInBasketHandle, Utils.intToByte(encoderFactory , numberOfProductsInBasket));
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( enterQueueHandleWrapper.getHandle(), parameters, generateTag(), time );
-        log("(EnterQueue) sent, customerId: " + customerId + " time: "+ fedamb.federateTime);
+        log("(EnterQueue) sent, customerId: " + customerId + "numberOfProductsInBasket: " + numberOfProductsInBasket
+                +  ", time: "+ fedamb.federateTime);
     }
 
     private void pay(int customerId, int checkoutId, int valueOfProducts) throws RTIexception {

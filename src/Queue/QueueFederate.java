@@ -14,6 +14,8 @@
  */
 package Queue;
 
+import Checkout.Checkout;
+import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger16BE;
@@ -63,9 +65,12 @@ public class QueueFederate
     public int numberOfQueues;
     public int maxQueueSize;
     public List<Queue> queues;
-    public LinkedList<Integer> customersIds = new LinkedList<>();
+    public LinkedList<Event> customersIds = new LinkedList<>();
+    public LinkedList<Checkout> checkouts = new LinkedList<>();
     private Random random = new Random();
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
+    protected ParameterHandle customerIdParameterHandleEnterQueue;
+    protected ParameterHandle numberOfProductsParameterHandleEnterQueue;
 
     /**
      * This is just a helper method to make sure all logging it output in the same form
@@ -188,13 +193,26 @@ public class QueueFederate
                 }
             }
 
-            Integer customerId = null;
+            Event event = null;
             if (!customersIds.isEmpty()) {
-                customerId = customersIds.getFirst();
+                event = customersIds.getFirst();
             }
 
-            if (customerId != null) {
+            if (event != null && event.getInteractionClassHandle().equals(this.enterQueueHandleWrapper.getHandle())) {
                 List<Integer> freeQueuesNumbers = new LinkedList<>();
+                int customerId = 0;
+                int numberOfProductsInBasket = 0;
+
+                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                    if (parameter.equals(this.customerIdParameterHandleEnterQueue)) {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        customerId = Utils.byteToInt(bytes);
+                    } else {
+                        byte[] bytes = parameterHandleValueMap.get(parameter);
+                        numberOfProductsInBasket = Utils.byteToInt(bytes);
+                    }
+                }
 
                 queues.forEach(queue -> {
                     if(queue.getCustomerListIds().size() < maxQueueSize)
@@ -209,11 +227,11 @@ public class QueueFederate
                     int numberOfQueue = freeQueuesNumbers.get(index);
                     Queue queue = queues.get(numberOfQueue);
                     updateAttributeValues(queue, customerId);
-                    enterCheckout(customerId, queue.getCheckoutId());
                     customersIds.removeFirst();
                 }
 
             }
+//            enterCheckout(event, enteredQueue.getCheckoutId());
         }
             advanceTime( 1.0 );
             log( "Time Advanced to " + fedamb.federateTime );
@@ -298,6 +316,9 @@ public class QueueFederate
 
         this.enterQueueHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterQueue");
         enterQueueHandleWrapper.subscribe();
+
+        this.customerIdParameterHandleEnterQueue = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "customerId");
+        this.numberOfProductsParameterHandleEnterQueue = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "numberOfProductsInBasket");
 
         this.enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterCheckout");
         this.enterCheckoutHandleWrapper.publish();

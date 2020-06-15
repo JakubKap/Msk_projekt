@@ -306,7 +306,7 @@
 				<parameter>
 					<name>valueOfProducts</name>
 					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator klienta</semantics>
+					<semantics>Liczba produktów, które klient spakował do koszyka podczas robienia zakupów</semantics>
 				</parameter>
     		</interactionClass>
     		<interactionClass>
@@ -321,9 +321,9 @@
     				<semantics>Identyfikator klienta</semantics>
     			</parameter>
     			<parameter>
-    				<name>queueId</name>
+    				<name>numberOfProductsInBasket</name>
     				<dataType>HLAinteger32BE</dataType>
-    				<semantics>Identyfikator kolejki</semantics>
+    				<semantics>L</semantics>
     			</parameter>
     		</interactionClass>
     		<interactionClass>

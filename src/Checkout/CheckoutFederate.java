@@ -109,6 +109,7 @@ public class CheckoutFederate
                         checkouts.add(checkout);
                         ObjectInstanceHandle checkoutInstanceHandler = registerObject();
                         checkout.setHandler(checkoutInstanceHandler);
+                        updateAttributeValues(checkout);
                     }
                 }
 
@@ -225,18 +226,20 @@ public class CheckoutFederate
         return objectInstanceHandle;
     }
 
-    private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception
+    private void updateAttributeValues(Checkout checkout) throws RTIexception
     {
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(3);
 
-        int randomValue = 101 + new Random().nextInt(3);
-        HLAinteger32BE flavValue = encoderFactory.createHLAinteger32BE( randomValue );
-//        attributes.put( flavHandle, flavValue.toByteArray() );
+        byte[] checkoutIdArray = Utils.intToByte(encoderFactory, checkout.getId());
+        byte[] checkoutIsFreeArray = Utils.booleanToByte(encoderFactory, checkout.isFree());
+        byte[] checkoutIsPriviligedArray = Utils.booleanToByte(encoderFactory, checkout.isPrivileged());
 
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
+        attributes.put(rtiamb.getAttributeHandle( checkoutHandle, "id" ), checkoutIdArray);
+        attributes.put(rtiamb.getAttributeHandle( checkoutHandle, "isFree" ), checkoutIsFreeArray);
+        attributes.put(rtiamb.getAttributeHandle( checkoutHandle, "isPrivileged" ), checkoutIsPriviligedArray);
 
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
+        rtiamb.updateAttributeValues(checkout.getHandler(), attributes, generateTag(), time );
     }
 
     private void servicingCustomer(int customerId, int checkoutId) throws RTIexception {

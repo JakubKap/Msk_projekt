@@ -6,10 +6,12 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
+import hla.rti1516e.encoding.HLAboolean;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eBoolean;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 import java.util.Map;
@@ -46,5 +48,19 @@ public class Utils {
 
         HLAfloat64Time hlaTime = timeFactory.makeTime(time);
         rtiamb.sendInteraction(interactionClassHandle, parameterHandleValueMap, tag, hlaTime);
+    }
+
+    public static byte[] booleanToByte(EncoderFactory encoderFactory, boolean value) {
+        return encoderFactory.createHLAboolean(value).toByteArray();
+    }
+
+    public static boolean byteToBoolean(byte[] bytes) {
+        HLAboolean value = new HLA1516eBoolean();
+        try {
+            value.decode(bytes);
+        } catch (DecoderException e) {
+            e.printStackTrace();
+        }
+        return value.getValue();
     }
 }

@@ -14,6 +14,7 @@
  */
 package Queue;
 
+import Checkout.Checkout;
 import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
@@ -211,6 +212,37 @@ class QueueFederateAmbassador extends NullFederateAmbassador
                 }
             }
         }
+        else {
+            int checkoutId = 0;
+            boolean isFree = false;
+            boolean isPriviliged = false;
+
+            for (AttributeHandle attribute : theAttributes.keySet()) {
+                try {
+                    if (attribute.equals
+                            (this.federate.checkoutHandleWrapper.getAttribute("id"))) {
+                        byte[] bytes = theAttributes.get(attribute);
+                        checkoutId = Utils.byteToInt(bytes);
+                        builder.append(" received, checkoutId = " + checkoutId);
+                    }
+                    else if (attribute.equals
+                            (this.federate.checkoutHandleWrapper.getAttribute("isFree"))){
+                        byte[] bytes = theAttributes.get(attribute);
+                        isFree = Utils.byteToBoolean(bytes);
+                        builder.append(" received, isFree = " + isFree);
+                    }
+                    else if(attribute.equals
+                            (this.federate.checkoutHandleWrapper.getAttribute("isPrivileged"))){
+                        byte[] bytes = theAttributes.get(attribute);
+                        isPriviliged = Utils.byteToBoolean(bytes);
+                        builder.append(" received, isPriviliged = " + isPriviliged);
+                    }
+                } catch (RTIexception rtIexception) {
+                    rtIexception.printStackTrace();
+                }
+                this.federate.checkouts.add(new Checkout(checkoutId, isPriviliged, isFree));
+            }
+        }
 
         log( builder.toString() );
     }
@@ -254,12 +286,19 @@ class QueueFederateAmbassador extends NullFederateAmbassador
         {
             builder.append( " (EnterQueue)" );
             int customerId = 0;
+            int numberOfProductsInBasket =  0;
             for(ParameterHandle parameter : theParameters.keySet()){
-                byte[] bytes = theParameters.get(parameter);
-                customerId = Utils.byteToInt(bytes);
-                builder.append(" received, customerId = " + customerId);
+                if (parameter.equals(federate.customerIdParameterHandleEnterQueue)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                    builder.append(", customerId = " + customerId);
+                }else {
+                    byte[] bytes = theParameters.get(parameter);
+                    numberOfProductsInBasket = Utils.byteToInt(bytes);
+                    builder.append(", numberOfProductsInBasket = " + numberOfProductsInBasket);
+                }
             }
-            this.federate.customersIds.add(customerId);
+            this.federate.customersIds.add(new Event(interactionClass, theParameters));
         }
 
         // print the handle
