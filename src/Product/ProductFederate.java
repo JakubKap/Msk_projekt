@@ -47,6 +47,7 @@ public class ProductFederate {
      */
     public static final String READY_TO_RUN = "ReadyToRun";
     private static final String FEDERATE_NAME_TO_LOGGING = "ProductFederate";
+    protected ObjectInstanceHandle simulationParametersObjectInstanceHandle;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -56,6 +57,7 @@ public class ProductFederate {
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
+    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiInteractionClassHandleWrapper endShoppingHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
@@ -63,6 +65,8 @@ public class ProductFederate {
     public LinkedList<Event> eventList = new LinkedList<>();
 
     public int customerCounter = 0;
+    protected int percentageOfCustomersDoingSmallShopping;
+    protected ParameterHandle percentageOfCustomersDoingSmallShoppingParameterHandle;
 
     private static Random random = new Random();
 
@@ -120,6 +124,10 @@ public class ProductFederate {
         this.endShoppingHandleWrapper.publish();
         this.enterShopHandleWrapper.subscribe();
 
+        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
+        simulationParametersWrapper.addAttributes("percentageOfCustomersDoingSmallShopping");
+        simulationParametersWrapper.subscribe();
+
 //        this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
 //        customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
 //        customerHandleWrapper.publish();
@@ -163,8 +171,13 @@ public class ProductFederate {
         ParameterHandle valueOfProductsHandle = rtiamb.getParameterHandle(endShoppingHandleWrapper.getHandle(), "valueOfProducts");
 
 
-        int numberOfProductsInBasket = random.nextInt(5) + 2;
-        int valueOfProducts = random.nextInt(50) + 10;
+        int numberOfProductsInBasket;
+        if(random.nextDouble() *100 <= percentageOfCustomersDoingSmallShopping)
+            numberOfProductsInBasket = random.nextInt(5) + 1;
+        else
+            numberOfProductsInBasket = random.nextInt(5) + 6;
+
+        int valueOfProducts = (random.nextInt(5) + 10) * numberOfProductsInBasket;
 
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
         parameters.put(numberOfProductsInBasketHandle, Utils.intToByte(encoderFactory, numberOfProductsInBasket));

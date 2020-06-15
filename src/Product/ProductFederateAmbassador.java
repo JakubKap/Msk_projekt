@@ -16,6 +16,7 @@ package Product;
 
 import hla.rti1516e.*;
 import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Event;
 import utils.Utils;
@@ -112,6 +113,10 @@ class ProductFederateAmbassador extends NullFederateAmbassador
 //        this.federate.customersList.add(theObject);
 //        log( "ProductAmbassador - Discoverd Object: handle=" + theObject + ", classHandle=" +
 //                theObjectClass + ", name=" + objectName + "SIZE = " + this.federate.customersList.size() );
+
+        if (theObjectClass.equals(federate.simulationParametersWrapper.getHandle())) {
+            federate.simulationParametersObjectInstanceHandle = theObject;
+        }
     }
 
     @Override
@@ -159,6 +164,24 @@ class ProductFederateAmbassador extends NullFederateAmbassador
         // print the attribute information
         builder.append( ", attributeCount=" + theAttributes.size() );
         builder.append( "\n" );
+
+        int percentageOfCustomersDoingSmallShopping;
+
+        if(theObject.equals(this.federate.simulationParametersObjectInstanceHandle)) {
+            for (AttributeHandle attribute : theAttributes.keySet()) {
+                try {
+                    if (attribute.equals
+                            (this.federate.simulationParametersWrapper.getAttribute("percentageOfCustomersDoingSmallShopping"))) {
+                        byte[] bytes = theAttributes.get(attribute);
+                        percentageOfCustomersDoingSmallShopping = Utils.byteToInt(bytes);
+                        this.federate.percentageOfCustomersDoingSmallShopping = percentageOfCustomersDoingSmallShopping;
+                        builder.append(" received, percentageOfCustomersDoingSmallShopping = " + percentageOfCustomersDoingSmallShopping);
+                    }
+                } catch (RTIexception rtIexception) {
+                    rtIexception.printStackTrace();
+                }
+            }
+        }
 
         log( builder.toString() );
     }
