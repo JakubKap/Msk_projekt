@@ -194,11 +194,25 @@ public class QueueFederate
             }
 
             if (customerId != null) {
-                int numberOfQueue = random.nextInt(queues.size());
-                Queue queue = queues.get(numberOfQueue);
-                updateAttributeValues(queue, customerId);
-                enterCheckout(customerId, queue.getCheckoutId());
-                customersIds.removeFirst();
+                List<Integer> freeQueuesNumbers = new LinkedList<>();
+
+                queues.forEach(queue -> {
+                    if(queue.getCustomerListIds().size() < maxQueueSize)
+                        freeQueuesNumbers.add(queue.getId());
+                });
+
+                if(freeQueuesNumbers.size() == 0){
+
+                }
+                else {
+                    int index = random.nextInt(freeQueuesNumbers.size());
+                    int numberOfQueue = freeQueuesNumbers.get(index);
+                    Queue queue = queues.get(numberOfQueue);
+                    updateAttributeValues(queue, customerId);
+                    enterCheckout(customerId, queue.getCheckoutId());
+                    customersIds.removeFirst();
+                }
+
             }
         }
             advanceTime( 1.0 );
@@ -319,6 +333,7 @@ public class QueueFederate
 
         List<Integer> customerIds = queue.getCustomerListIds();
         customerIds.add(numberOfClient);
+        log("Queue number: " + queue.getId() + " customerList: " + queue.getCustomerListIds());
 
         HLAvariableArray customerIdsList = new CustomersArray(customerIds);
 
