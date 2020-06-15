@@ -105,11 +105,15 @@ public class CustomerFederate
         while( fedamb.isRunning)
         {
             if (simulationStarted) {
-                Customer customer = createCustomer();
-//            updateAttributeValues( objectHandle );
+                if(random.nextInt(3) == 0){
+                    Customer customer = createCustomer();
 
-                enterShop(customer.getId());
+                    //            updateAttributeValues( objectHandle );
+
+                    enterShop(customer.getId());
 //
+                }
+
                 updateCustomersWithBoughtProducts();
 
                 Event event = null;
@@ -136,7 +140,7 @@ public class CustomerFederate
                     servicingCustomers.removeFirst();
                 }
             }
-            advanceTime(random.nextInt(9) + 1);
+            advanceTime(1.0);
         }
 
         deleteObject();
