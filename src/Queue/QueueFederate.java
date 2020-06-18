@@ -179,14 +179,9 @@ public class QueueFederate {
             log("Time Advanced to " + fedamb.federateTime);
         }
 
-        queues.forEach(
-                queue -> {
-                    try {
-                        deleteObject(queue.getHandler());
-                    } catch (RTIexception rtIexception) {
-                        rtIexception.printStackTrace();
-                    }
-                });
+        for (Queue queue : queues) {
+            deleteObject(queue.getHandler());
+        }
 //        deleteObject( objectHandle );
 //        log( "Deleted Object, handle=" + objectHandle );
 
@@ -258,11 +253,11 @@ public class QueueFederate {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle checkoutIdHandle = createCheckoutHandleWrapper.getParameter("checkoutId");
         parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
-        rtiamb.sendInteraction( createCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time );
+        rtiamb.sendInteraction(createCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time);
 
-        log("(CreateCheckout) sent, checkoutId: "+ checkoutId + " time: "+ fedamb.federateTime);
+        log("(CreateCheckout) sent, checkoutId: " + checkoutId + " time: " + fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////
