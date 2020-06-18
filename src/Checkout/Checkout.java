@@ -6,14 +6,7 @@ public class Checkout {
     private int id;
     private boolean isPrivileged;
     private boolean isFree;
-    private static int currentId = 0;
     private ObjectInstanceHandle handler;
-
-    public Checkout(boolean isPrivileged, boolean isFree) {
-        this.id = currentId++;
-        this.isPrivileged = isPrivileged;
-        this.isFree = isFree;
-    }
 
     public Checkout(int checkoutId, boolean isPrivileged, boolean isFree) {
         this.id = checkoutId;

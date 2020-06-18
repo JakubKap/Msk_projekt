@@ -18,8 +18,6 @@ import Checkout.Checkout;
 import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger16BE;
-import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.encoding.HLAvariableArray;
 import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
 import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
@@ -42,10 +40,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("Duplicates")
-public class QueueFederate
-{
+public class QueueFederate {
     public static final String READY_TO_RUN = "ReadyToRun";
 
     //----------------------------------------------------------
@@ -62,10 +60,11 @@ public class QueueFederate
     protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterCheckoutHandleWrapper;
+    protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
     public int numberOfQueues;
     public int maxQueueSize;
     public List<Queue> queues;
-    public LinkedList<Event> customersIds = new LinkedList<>();
+    public LinkedList<Event> events = new LinkedList<>();
     public LinkedList<Checkout> checkouts = new LinkedList<>();
     private Random random = new Random();
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
@@ -75,25 +74,20 @@ public class QueueFederate
     /**
      * This is just a helper method to make sure all logging it output in the same form
      */
-    private void log( String message )
-    {
-        System.out.println( "QueueFederate   : " + message );
+    private void log(String message) {
+        System.out.println("QueueFederate   : " + message);
     }
 
     /**
      * This method will block until the user presses enter
      */
-    private void waitForUser()
-    {
-        log( " >>>>>>>>>> Press Enter to Continue <<<<<<<<<<" );
-        BufferedReader reader = new BufferedReader( new InputStreamReader(System.in) );
-        try
-        {
+    private void waitForUser() {
+        log(" >>>>>>>>>> Press Enter to Continue <<<<<<<<<<");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        try {
             reader.readLine();
-        }
-        catch( Exception e )
-        {
-            log( "Error while waiting for user input: " + e.getMessage() );
+        } catch (Exception e) {
+            log("Error while waiting for user input: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -101,41 +95,36 @@ public class QueueFederate
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
+
     /**
      * This is the main simulation loop. It can be thought of as the main method of
      * the federate. For a description of the basic flow of this federate, see the
      * class level comments
      */
-    public void runFederate( String federateName ) throws Exception
-    {
+    public void runFederate(String federateName) throws Exception, RTIexception {
 
-        log( "Creating RTIambassador" );
+        log("Creating RTIambassador");
         rtiamb = RtiFactoryFactory.getRtiFactory().getRtiAmbassador();
         encoderFactory = RtiFactoryFactory.getRtiFactory().getEncoderFactory();
 
         // connect
-        log( "Connecting..." );
-        fedamb = new QueueFederateAmbassador( this );
-        rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
+        log("Connecting...");
+        fedamb = new QueueFederateAmbassador(this);
+        rtiamb.connect(fedamb, CallbackModel.HLA_EVOKED);
 
-        log( "Creating Federation..." );
+        log("Creating Federation...");
 
-        try
-        {
-            URL []modules = new URL[]{
+        try {
+            URL[] modules = new URL[]{
                     (new File("foms/ShopFom.xml")).toURI().toURL()
             };
 
-            rtiamb.createFederationExecution( "Federation", modules );
-            log( "Created Federation" );
-        }
-        catch( FederationExecutionAlreadyExists exists )
-        {
-            log( "Didn't create federation, it already existed" );
-        }
-        catch( MalformedURLException urle )
-        {
-            log( "Exception loading one of the FOM modules from disk: " + urle.getMessage() );
+            rtiamb.createFederationExecution("Federation", modules);
+            log("Created Federation");
+        } catch (FederationExecutionAlreadyExists exists) {
+            log("Didn't create federation, it already existed");
+        } catch (MalformedURLException urle) {
+            log("Exception loading one of the FOM modules from disk: " + urle.getMessage());
             urle.printStackTrace();
             return;
         }
@@ -144,144 +133,161 @@ public class QueueFederate
                 (new File("foms/ShopFom.xml")).toURI().toURL()
         };
 
-        rtiamb.joinFederationExecution( federateName,            // name for the federate
+        rtiamb.joinFederationExecution(federateName,            // name for the federate
                 "queue",   // federate type
                 "Federation",     // name of federation
-                joinModules );           // modules we want to add
+                joinModules);           // modules we want to add
 
-        log( "Joined Federation as " + federateName );
+        log("Joined Federation as " + federateName);
 
         // cache the time factory for easy access
-        this.timeFactory = (HLAfloat64TimeFactory)rtiamb.getTimeFactory();
+        this.timeFactory = (HLAfloat64TimeFactory) rtiamb.getTimeFactory();
 
-        rtiamb.registerFederationSynchronizationPoint( READY_TO_RUN, null );
+        rtiamb.registerFederationSynchronizationPoint(READY_TO_RUN, null);
         // wait until the point is announced
-        while( fedamb.isAnnounced == false )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isAnnounced == false) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
         waitForUser();
 
-        rtiamb.synchronizationPointAchieved( READY_TO_RUN );
-        log( "Achieved sync point: " +READY_TO_RUN+ ", waiting for federation..." );
-        while( fedamb.isReadyToRun == false )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        rtiamb.synchronizationPointAchieved(READY_TO_RUN);
+        log("Achieved sync point: " + READY_TO_RUN + ", waiting for federation...");
+        while (fedamb.isReadyToRun == false) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
         enableTimePolicy();
-        log( "Time Policy Enabled" );
+        log("Time Policy Enabled");
 
         publishAndSubscribe();
-        log( "Published and Subscribed" );
+        log("Published and Subscribed");
 
-//        ObjectInstanceHandle objectHandle = registerObject();
-//        log( "Registered Object, handle=" + objectHandle );
+        while (fedamb.isRunning) {
+            boolean simulationStarted = numberOfQueues != 0;
+            if (simulationStarted) {
+                if (queues == null) {
+                    createQueues();
+                }
 
-        while( fedamb.isRunning )
-        {
-//            updateAttributeValues( objectHandle );
-        if(numberOfQueues != 0) {
-            if (queues == null) {
-                queues = new ArrayList<>();
-                for (int i = 0; i < numberOfQueues; i++) {
-                    Queue queue = new Queue(maxQueueSize);
-                    queues.add(queue);
-                    ObjectInstanceHandle customerInstanceHandler = registerObject();
-                    queue.setHandler(customerInstanceHandler);
+                if (!events.isEmpty()) {
+                    Event event = events.poll();
+                    handleEnterQueueEvent(event);
                 }
             }
+            advanceTime(1.0);
+            log("Time Advanced to " + fedamb.federateTime);
+        }
 
-            Event event = null;
-            if (!customersIds.isEmpty()) {
-                event = customersIds.getFirst();
-            }
-
-            if (event != null && event.getInteractionClassHandle().equals(this.enterQueueHandleWrapper.getHandle())) {
-                List<Integer> freeQueuesNumbers = new LinkedList<>();
-                int customerId = 0;
-                int numberOfProductsInBasket = 0;
-
-                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                    if (parameter.equals(this.customerIdParameterHandleEnterQueue)) {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        customerId = Utils.byteToInt(bytes);
-                    } else {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        numberOfProductsInBasket = Utils.byteToInt(bytes);
+        queues.forEach(
+                queue -> {
+                    try {
+                        deleteObject(queue.getHandler());
+                    } catch (RTIexception rtIexception) {
+                        rtIexception.printStackTrace();
                     }
-                }
-
-                queues.forEach(queue -> {
-                    if(queue.getCustomerListIds().size() < maxQueueSize)
-                        freeQueuesNumbers.add(queue.getId());
                 });
-
-                if(freeQueuesNumbers.size() == 0){
-
-                }
-                else {
-                    int index = random.nextInt(freeQueuesNumbers.size());
-                    int numberOfQueue = freeQueuesNumbers.get(index);
-                    Queue queue = queues.get(numberOfQueue);
-                    updateAttributeValues(queue, customerId);
-                    customersIds.removeFirst();
-                }
-
-            }
-//            enterCheckout(event, enteredQueue.getCheckoutId());
-        }
-            advanceTime( 1.0 );
-            log( "Time Advanced to " + fedamb.federateTime );
-        }
-
 //        deleteObject( objectHandle );
 //        log( "Deleted Object, handle=" + objectHandle );
 
-        rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
-        log( "Resigned from Federation" );
+        rtiamb.resignFederationExecution(ResignAction.DELETE_OBJECTS);
+        log("Resigned from Federation");
 
-        try
-        {
-            rtiamb.destroyFederationExecution( "Federation" );
-            log( "Destroyed Federation" );
+        try {
+            rtiamb.destroyFederationExecution("Federation");
+            log("Destroyed Federation");
+        } catch (FederationExecutionDoesNotExist dne) {
+            log("No need to destroy federation, it doesn't exist");
+        } catch (FederatesCurrentlyJoined fcj) {
+            log("Didn't destroy federation, federates still joined");
         }
-        catch( FederationExecutionDoesNotExist dne )
-        {
-            log( "No need to destroy federation, it doesn't exist" );
+    }
+
+    private void handleEnterQueueEvent(Event event) throws RTIexception {
+        if (event != null && event.getInteractionClassHandle().equals(this.enterQueueHandleWrapper.getHandle())) {
+            Customer customer = new Customer(-1);
+
+            ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+            for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                if (parameter.equals(this.customerIdParameterHandleEnterQueue)) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customer.setId(Utils.byteToInt(bytes));
+                } else {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customer.setNumberOfProductsInBasket(Utils.byteToInt(bytes));
+                }
+            }
+
+            List<Queue> freeQueues = findFreeQueues();
+
+            Queue queue;
+            if (freeQueues.isEmpty()) {
+                queue = createQueue();
+            } else {
+                int index = random.nextInt(freeQueues.size());
+                queue = freeQueues.get(index);
+            }
+            updateAttributeValues(queue, customer.getId());
+//            enterCheckout(event, enteredQueue.getCheckoutId());
         }
-        catch( FederatesCurrentlyJoined fcj )
-        {
-            log( "Didn't destroy federation, federates still joined" );
+    }
+
+    private List<Queue> findFreeQueues() {
+        return queues.stream()
+                .filter(queue -> queue.getCustomerListIds().size() < maxQueueSize)
+                .collect(Collectors.toList());
+    }
+
+    private void createQueues() throws RTIexception {
+        queues = new ArrayList<>();
+        for (int i = 0; i < numberOfQueues; i++) {
+            Queue queue = createQueue();
+            queues.add(queue);
         }
+    }
+
+    private Queue createQueue() throws RTIexception {
+        Queue queue = new Queue(maxQueueSize);
+        ObjectInstanceHandle customerInstanceHandler = registerObject();
+        queue.setHandler(customerInstanceHandler);
+        sendInteractionCreateCheckout(queue.getId());
+        return queue;
+    }
+
+    private void sendInteractionCreateCheckout(int checkoutId) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+        ParameterHandle checkoutIdHandle = createCheckoutHandleWrapper.getParameter("checkoutId");
+        parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( createCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time );
+
+        log("(CreateCheckout) sent, checkoutId: "+ checkoutId + " time: "+ fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
+
     /**
      * This method will attempt to enable the various time related properties for
      * the federate
      */
-    private void enableTimePolicy() throws Exception
-    {
+    private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
         //       Portico specific. You will have to alter this if you move to a
         //       different RTI implementation. As such, we've isolated it into a
         //       method so that any change only needs to happen in a couple of spots
-        HLAfloat64Interval lookahead = timeFactory.makeInterval( fedamb.federateLookahead );
+        HLAfloat64Interval lookahead = timeFactory.makeInterval(fedamb.federateLookahead);
 
         ////////////////////////////
         // enable time regulation //
         ////////////////////////////
-        this.rtiamb.enableTimeRegulation( lookahead );
+        this.rtiamb.enableTimeRegulation(lookahead);
 
         // tick until we get the callback
-        while( fedamb.isRegulating == false )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isRegulating == false) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
         /////////////////////////////
@@ -290,9 +296,8 @@ public class QueueFederate
         this.rtiamb.enableTimeConstrained();
 
         // tick until we get the callback
-        while( fedamb.isConstrained == false )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isConstrained == false) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
     }
 
@@ -310,7 +315,7 @@ public class QueueFederate
         this.customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
         this.customerHandleWrapper.subscribe();
 
-        this.checkoutHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb,"HLAobjectRoot.Checkout" );
+        this.checkoutHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Checkout");
         this.checkoutHandleWrapper.addAttributes("id", "isPrivileged", "isFree");
         this.checkoutHandleWrapper.subscribe();
 
@@ -327,6 +332,8 @@ public class QueueFederate
         simulationParametersWrapper.addAttributes("maxQueueSize", "initialNumberOfCheckouts");
         simulationParametersWrapper.subscribe();
 
+        this.createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.CreateCheckout");
+        this.createCheckoutHandleWrapper.publish();
     }
 
     /**
@@ -334,8 +341,7 @@ public class QueueFederate
      * return the federation-wide unique handle for that instance. Later in the
      * simulation, we will update the attribute values for this instance
      */
-    private ObjectInstanceHandle registerObject() throws RTIexception
-    {
+    private ObjectInstanceHandle registerObject() throws RTIexception {
         return rtiamb.registerObjectInstance(queueHandleWrapper.getHandle());
     }
 
@@ -348,12 +354,11 @@ public class QueueFederate
      * Note that we don't actually have to update all the attributes at once, we
      * could update them individually, in groups or not at all!
      */
-    private void updateAttributeValues(Queue queue, int numberOfClient) throws RTIexception
-    {
+    private void updateAttributeValues(Queue queue, int customerId) throws RTIexception {
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
 
         List<Integer> customerIds = queue.getCustomerListIds();
-        customerIds.add(numberOfClient);
+        customerIds.add(customerId);
         log("Queue number: " + queue.getId() + " customerList: " + queue.getCustomerListIds());
 
         HLAvariableArray customerIdsList = new CustomersArray(customerIds);
@@ -363,7 +368,7 @@ public class QueueFederate
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
         rtiamb.updateAttributeValues(queue.getHandler(), attributes, generateTag(), time);
 
-        log("Customer: " + numberOfClient + " was added to queue: " + queue.getId());
+        log("Customer: " + customerId + " was added to queue: " + queue.getId());
     }
 
     private void enterCheckout(int customerId, int checkoutId) throws RTIexception {
@@ -372,11 +377,11 @@ public class QueueFederate
         ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "checkoutId");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
         parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
-        rtiamb.sendInteraction( enterCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time );
+        rtiamb.sendInteraction(enterCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time);
 
-        log("(EnterCheckout) sent, customerId: "+ customerId + ", checkoutId: " + checkoutId + " time: "+ fedamb.federateTime);
+        log("(EnterCheckout) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + " time: " + fedamb.federateTime);
     }
 
     /**
@@ -384,18 +389,16 @@ public class QueueFederate
      * timestep. It will then wait until a notification of the time advance grant
      * has been received.
      */
-    private void advanceTime( double timestep ) throws RTIexception
-    {
+    private void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
-        rtiamb.timeAdvanceRequest( time );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + timestep);
+        rtiamb.timeAdvanceRequest(time);
 
         // wait for the time advance to be granted. ticking will tell the
         // LRC to start delivering callbacks to the federate
-        while( fedamb.isAdvancing )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isAdvancing) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
     }
 
@@ -404,40 +407,32 @@ public class QueueFederate
      * handle. We can only delete objects we created, or for which we own the
      * privilegeToDelete attribute.
      */
-    private void deleteObject( ObjectInstanceHandle handle ) throws RTIexception
-    {
-        rtiamb.deleteObjectInstance( handle, generateTag() );
+    private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
+        rtiamb.deleteObjectInstance(handle, generateTag());
     }
 
-    private short getTimeAsShort()
-    {
-        return (short)fedamb.federateTime;
+    private short getTimeAsShort() {
+        return (short) fedamb.federateTime;
     }
 
-    private byte[] generateTag()
-    {
-        return ("(timestamp) "+System.currentTimeMillis()).getBytes();
+    private byte[] generateTag() {
+        return ("(timestamp) " + System.currentTimeMillis()).getBytes();
     }
 
     //----------------------------------------------------------
     //                     STATIC METHODS
     //----------------------------------------------------------
-    public static void main( String[] args )
-    {
+    public static void main(String[] args) {
         // get a federate name, use "exampleFederate" as default
         String federateName = "Queue";
-        if( args.length != 0 )
-        {
+        if (args.length != 0) {
             federateName = args[0];
         }
 
-        try
-        {
+        try {
             // run the example federate
-            new QueueFederate().runFederate( federateName );
-        }
-        catch( Exception rtie )
-        {
+            new QueueFederate().runFederate(federateName);
+        } catch (Exception rtie) {
             // an exception occurred, just log the information and exit
             rtie.printStackTrace();
         }

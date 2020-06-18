@@ -292,13 +292,13 @@ class QueueFederateAmbassador extends NullFederateAmbassador
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
                     builder.append(", customerId = " + customerId);
-                }else {
+                } else {
                     byte[] bytes = theParameters.get(parameter);
                     numberOfProductsInBasket = Utils.byteToInt(bytes);
                     builder.append(", numberOfProductsInBasket = " + numberOfProductsInBasket);
                 }
             }
-            this.federate.customersIds.add(new Event(interactionClass, theParameters));
+            this.federate.events.add(new Event(interactionClass, theParameters));
         }
 
         // print the handle

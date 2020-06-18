@@ -14,6 +14,10 @@ public class Customer {
         this.id = currentId++;
     }
 
+    public Customer(int id) {
+        this.id = id;
+    }
+
     public Customer(ObjectInstanceHandle handler) {
         this.id = currentId++;
         this.handler = handler;

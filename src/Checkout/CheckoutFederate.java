@@ -16,11 +16,11 @@ package Checkout;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
 import utils.Event;
 import utils.Utils;
@@ -30,14 +30,14 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-public class CheckoutFederate
-{
-    /** The sync point all federates will sync up on before starting */
+public class CheckoutFederate {
+    /**
+     * The sync point all federates will sync up on before starting
+     */
     public static final String READY_TO_RUN = "ReadyToRun";
 
     private RTIambassador rtiamb;
@@ -59,6 +59,7 @@ public class CheckoutFederate
     private InteractionClassHandle createCheckoutHandle;
     protected InteractionClassHandle payHandle;
     protected InteractionClassHandle exitShopHandle;
+    protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
 
     protected ParameterHandle customerIdParameterHandlePay;
     protected ParameterHandle checkoutIdParameterHandlePay;
@@ -69,6 +70,7 @@ public class CheckoutFederate
     public List<Checkout> checkouts;
     public LinkedList<Event> servicingCustomers = new LinkedList<>();
     public LinkedList<Event> customersToExit = new LinkedList<>();
+    public LinkedList<Event> createCheckoutEvents = new LinkedList<>();
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     private Random random = new Random();
 
@@ -76,13 +78,13 @@ public class CheckoutFederate
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
+
     /**
      * This is the main simulation loop. It can be thought of as the main method of
      * the federate. For a description of the basic flow of this federate, see the
      * class level comments
      */
-    public void runFederate( String federateName ) throws Exception
-    {
+    public void runFederate(String federateName) throws Exception {
         if (
                 createRTIAndFederation(
                         new CheckoutFederateAmbassador(this),
@@ -100,18 +102,14 @@ public class CheckoutFederate
         publishAndSubscribe();
         ObjectInstanceHandle objectHandle = registerObject();
 
-        while( fedamb.isRunning ) {
-            if(numberOfCheckouts != 0) {
-                if (checkouts == null) {
-                    checkouts = new ArrayList<>();
-                    for (int i = 0; i < numberOfCheckouts; i++) {
-                        Checkout checkout = new Checkout(random.nextBoolean(), true);
-                        checkouts.add(checkout);
-                        ObjectInstanceHandle checkoutInstanceHandler = registerObject();
-                        checkout.setHandler(checkoutInstanceHandler);
-                        updateAttributeValues(checkout);
-                    }
+        while (fedamb.isRunning) {
+            boolean simulationStarted = numberOfCheckouts != 0;
+            if (simulationStarted) {
+
+                for (Event createCheckoutEvent : createCheckoutEvents) {
+                    handleCreateCheckoutEvent(createCheckoutEvent);
                 }
+                createCheckoutEvents.clear();
 
                 Event event = null;
                 if (!servicingCustomers.isEmpty()) {
@@ -156,8 +154,8 @@ public class CheckoutFederate
                 }
 
             }
-            advanceTime( 1.0 );
-            log( "Time Advanced to " + fedamb.federateTime );
+            advanceTime(1.0);
+            log("Time Advanced to " + fedamb.federateTime);
         }
 
         deleteObject(objectHandle);
@@ -165,19 +163,38 @@ public class CheckoutFederate
         destroyFederation();
     }
 
-    private void publishAndSubscribe() throws RTIexception
-    {
+    private void handleCreateCheckoutEvent(Event event) throws RTIexception {
+        int checkoutId = 0;
+        ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+        for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+            if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("checkoutId"))) {
+                byte[] bytes = parameterHandleValueMap.get(parameter);
+                checkoutId = Utils.byteToInt(bytes);
+            }
+        }
+        Checkout checkout = createCheckout(checkoutId);
+        updateAttributeValues(checkout);
+    }
+
+    private Checkout createCheckout(int checkoutId) throws RTIexception{
+        Checkout checkout = new Checkout(checkoutId, random.nextBoolean(), true);
+        ObjectInstanceHandle checkoutInstanceHandler = registerObject();
+        checkout.setHandler(checkoutInstanceHandler);
+        return checkout;
+    }
+
+    private void publishAndSubscribe() throws RTIexception {
         this.checkoutHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Customer");
-        this.checkoutIdHandle = rtiamb.getAttributeHandle(checkoutHandle, "id" );
-        this.isPrivilegedHandle = rtiamb.getAttributeHandle(checkoutHandle, "numberOfProductsInBasket" );
-        this.isFreeHandle = rtiamb.getAttributeHandle(checkoutHandle, "valueOfProducts" );
+        this.checkoutIdHandle = rtiamb.getAttributeHandle(checkoutHandle, "id");
+        this.isPrivilegedHandle = rtiamb.getAttributeHandle(checkoutHandle, "numberOfProductsInBasket");
+        this.isFreeHandle = rtiamb.getAttributeHandle(checkoutHandle, "valueOfProducts");
 
         AttributeHandleSet customerAttributes = rtiamb.getAttributeHandleSetFactory().create();
         customerAttributes.add(checkoutIdHandle);
         customerAttributes.add(isPrivilegedHandle);
         customerAttributes.add(isFreeHandle);
 
-        rtiamb.publishObjectClassAttributes(checkoutHandle, customerAttributes );
+        rtiamb.publishObjectClassAttributes(checkoutHandle, customerAttributes);
 
         this.checkoutHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Checkout");
         this.checkoutIdHandle = rtiamb.getAttributeHandle(checkoutHandle, "id");
@@ -191,27 +208,30 @@ public class CheckoutFederate
 
         rtiamb.publishObjectClassAttributes(checkoutHandle, checkoutAttributes);
 
-        servicingCustomerHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ServicingCustomer" );
+        servicingCustomerHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.ServicingCustomer");
         rtiamb.publishInteractionClass(servicingCustomerHandle);
 
-        enterCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.EnterCheckout" );
+        enterCheckoutHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.EnterCheckout");
         rtiamb.subscribeInteractionClass(enterCheckoutHandle);
 
         this.customerIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandle, "customerId");
         this.checkoutIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandle, "checkoutId");
 
-        createCheckoutHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.CreateCheckout" );
+        createCheckoutHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.CreateCheckout");
         rtiamb.subscribeInteractionClass(createCheckoutHandle);
 
-        payHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.Pay" );
+        payHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.Pay");
         rtiamb.subscribeInteractionClass(payHandle);
 
         this.customerIdParameterHandlePay = rtiamb.getParameterHandle(payHandle, "customerId");
         this.checkoutIdParameterHandlePay = rtiamb.getParameterHandle(payHandle, "checkoutId");
         this.priceParameterHandlePay = rtiamb.getParameterHandle(payHandle, "price");
 
-        this.exitShopHandle = rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ExitShop" );
+        this.exitShopHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.ExitShop");
         rtiamb.publishInteractionClass(exitShopHandle);
+
+        this.createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.CreateCheckout");
+        this.createCheckoutHandleWrapper.subscribe();
 
         this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
         simulationParametersWrapper.addAttributes("initialNumberOfCheckouts");
@@ -226,20 +246,19 @@ public class CheckoutFederate
         return objectInstanceHandle;
     }
 
-    private void updateAttributeValues(Checkout checkout) throws RTIexception
-    {
+    private void updateAttributeValues(Checkout checkout) throws RTIexception {
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(3);
 
         byte[] checkoutIdArray = Utils.intToByte(encoderFactory, checkout.getId());
         byte[] checkoutIsFreeArray = Utils.booleanToByte(encoderFactory, checkout.isFree());
         byte[] checkoutIsPriviligedArray = Utils.booleanToByte(encoderFactory, checkout.isPrivileged());
 
-        attributes.put(rtiamb.getAttributeHandle( checkoutHandle, "id" ), checkoutIdArray);
-        attributes.put(rtiamb.getAttributeHandle( checkoutHandle, "isFree" ), checkoutIsFreeArray);
-        attributes.put(rtiamb.getAttributeHandle( checkoutHandle, "isPrivileged" ), checkoutIsPriviligedArray);
+        attributes.put(rtiamb.getAttributeHandle(checkoutHandle, "id"), checkoutIdArray);
+        attributes.put(rtiamb.getAttributeHandle(checkoutHandle, "isFree"), checkoutIsFreeArray);
+        attributes.put(rtiamb.getAttributeHandle(checkoutHandle, "isPrivileged"), checkoutIsPriviligedArray);
 
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues(checkout.getHandler(), attributes, generateTag(), time );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
+        rtiamb.updateAttributeValues(checkout.getHandler(), attributes, generateTag(), time);
     }
 
     private void servicingCustomer(int customerId, int checkoutId) throws RTIexception {
@@ -248,27 +267,26 @@ public class CheckoutFederate
         ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(servicingCustomerHandle, "checkoutId");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
         parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
-        rtiamb.sendInteraction( servicingCustomerHandle, parameters, generateTag(), time );
+        rtiamb.sendInteraction(servicingCustomerHandle, parameters, generateTag(), time);
 
-        log("(ServicingCustomer) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + " time: "+ fedamb.federateTime);
+        log("(ServicingCustomer) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + " time: " + fedamb.federateTime);
     }
 
     private void exitShop(int customerId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(exitShopHandle, "customerId");
-        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory , customerId));
+        parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
 
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
-        rtiamb.sendInteraction( exitShopHandle, parameters, generateTag(), time );
-        log("(ExitShop) sent, customerId: " + customerId + " time: "+ fedamb.federateTime);
+        rtiamb.sendInteraction(exitShopHandle, parameters, generateTag(), time);
+        log("(ExitShop) sent, customerId: " + customerId + " time: " + fedamb.federateTime);
     }
 
-    private void deleteObject( ObjectInstanceHandle handle ) throws RTIexception
-    {
-        rtiamb.deleteObjectInstance( handle, generateTag() );
+    private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
+        rtiamb.deleteObjectInstance(handle, generateTag());
         log("Deleted Object, handle=" + handle);
     }
 
@@ -327,45 +345,42 @@ public class CheckoutFederate
     /**
      * This is just a helper method to make sure all logging it output in the same form
      */
-    private void log( String message )
-    {
-        System.out.println( "CheckoutFederate   : " + message );
+    private void log(String message) {
+        System.out.println("CheckoutFederate   : " + message);
     }
 
     /**
      * This method will block until the user presses enter
      */
     private void waitForUser() {
-        log( " >>>>>>>>>> Press Enter to Continue <<<<<<<<<<" );
-        BufferedReader reader = new BufferedReader( new InputStreamReader(System.in) );
+        log(" >>>>>>>>>> Press Enter to Continue <<<<<<<<<<");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         try {
             reader.readLine();
-        }
-        catch( Exception e ) {
-            log( "Error while waiting for user input: " + e.getMessage() );
+        } catch (Exception e) {
+            log("Error while waiting for user input: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     private short getTimeAsShort() {
-        return (short)fedamb.federateTime;
+        return (short) fedamb.federateTime;
     }
 
     private byte[] generateTag() {
-        return ("(timestamp) "+System.currentTimeMillis()).getBytes();
+        return ("(timestamp) " + System.currentTimeMillis()).getBytes();
     }
 
-    private void advanceTime( double timestep ) throws RTIexception {
+    private void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
-        rtiamb.timeAdvanceRequest( time );
+        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + timestep);
+        rtiamb.timeAdvanceRequest(time);
 
         // wait for the time advance to be granted. ticking will tell the
         // LRC to start delivering callbacks to the federate
-        while( fedamb.isAdvancing )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isAdvancing) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
         log("Time Advanced to " + fedamb.federateTime);
@@ -408,23 +423,21 @@ public class CheckoutFederate
      * This method will attempt to enable the various time related properties for
      * the federate
      */
-    private void enableTimePolicy() throws Exception
-    {
+    private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
         //       Portico specific. You will have to alter this if you move to a
         //       different RTI implementation. As such, we've isolated it into a
         //       method so that any change only needs to happen in a couple of spots
-        HLAfloat64Interval lookahead = timeFactory.makeInterval( fedamb.federateLookahead );
+        HLAfloat64Interval lookahead = timeFactory.makeInterval(fedamb.federateLookahead);
 
         ////////////////////////////
         // enable time regulation //
         ////////////////////////////
-        this.rtiamb.enableTimeRegulation( lookahead );
+        this.rtiamb.enableTimeRegulation(lookahead);
 
         // tick until we get the callback
-        while( fedamb.isRegulating == false )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isRegulating == false) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
         /////////////////////////////
@@ -433,9 +446,8 @@ public class CheckoutFederate
         this.rtiamb.enableTimeConstrained();
 
         // tick until we get the callback
-        while( fedamb.isConstrained == false )
-        {
-            rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+        while (fedamb.isConstrained == false) {
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
         log("Time Policy Enabled");
@@ -444,20 +456,17 @@ public class CheckoutFederate
     //----------------------------------------------------------
     //                     STATIC METHODS
     //----------------------------------------------------------
-    public static void main( String[] args )
-    {
+    public static void main(String[] args) {
         // get a federate name, use "exampleFederate" as default
         String federateName = "Checkout";
-        if( args.length != 0 )
-        {
+        if (args.length != 0) {
             federateName = args[0];
         }
 
         try {
             // run the example federate
-            new CheckoutFederate().runFederate( federateName );
-        }
-        catch( Exception rtie ) {
+            new CheckoutFederate().runFederate(federateName);
+        } catch (Exception rtie) {
             // an exception occurred, just log the information and exit
             rtie.printStackTrace();
         }
