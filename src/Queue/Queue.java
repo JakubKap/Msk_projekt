@@ -12,12 +12,13 @@ public class Queue {
     private int checkoutId;
     private static int currentId = 0;
     private ObjectInstanceHandle handler;
+    private boolean isPrivileged;
 
-    public Queue(int maxLimit) {
+    public Queue(int maxLimit, boolean isPrivileged) {
         this.maxLimit = maxLimit;
         this.id = currentId;
         this.checkoutId = currentId++;
-        // TODO zsynchronizuj ID kolejki z ID kasy
+        this.isPrivileged = isPrivileged;
     }
 
     public int getId() {
@@ -58,5 +59,13 @@ public class Queue {
 
     public void setHandler(ObjectInstanceHandle handler) {
         this.handler = handler;
+    }
+
+    public boolean isPrivileged() {
+        return isPrivileged;
+    }
+
+    public void setPrivileged(boolean privileged) {
+        isPrivileged = privileged;
     }
 }

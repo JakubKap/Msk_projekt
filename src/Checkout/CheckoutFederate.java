@@ -165,19 +165,23 @@ public class CheckoutFederate {
 
     private void handleCreateCheckoutEvent(Event event) throws RTIexception {
         int checkoutId = 0;
+        boolean isPrivileged = false;
         ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
         for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
             if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("checkoutId"))) {
                 byte[] bytes = parameterHandleValueMap.get(parameter);
                 checkoutId = Utils.byteToInt(bytes);
+            } else if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("isPrivileged"))) {
+                byte[] bytes = parameterHandleValueMap.get(parameter);
+                isPrivileged = Utils.byteToBoolean(bytes);
             }
         }
-        Checkout checkout = createCheckout(checkoutId);
+        Checkout checkout = createCheckout(checkoutId, isPrivileged);
         updateAttributeValues(checkout);
     }
 
-    private Checkout createCheckout(int checkoutId) throws RTIexception{
-        Checkout checkout = new Checkout(checkoutId, random.nextBoolean(), true);
+    private Checkout createCheckout(int checkoutId, boolean isPrivileged) throws RTIexception{
+        Checkout checkout = new Checkout(checkoutId, isPrivileged, true);
         ObjectInstanceHandle checkoutInstanceHandler = registerObject();
         checkout.setHandler(checkoutInstanceHandler);
         return checkout;

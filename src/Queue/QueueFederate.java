@@ -171,7 +171,7 @@ public class QueueFederate {
                 }
 
                 if (!events.isEmpty()) {
-                    Event event = events.poll();
+                    Event event = events.getFirst();
                     handleEnterQueueEvent(event);
                 }
             }
@@ -214,50 +214,91 @@ public class QueueFederate {
             }
 
             List<Queue> freeQueues = findFreeQueues();
+            List<Queue> freePriorityQueues = findFreePriorityQueues();
 
-            Queue queue;
-            if (freeQueues.isEmpty()) {
-                queue = createQueue();
+            if (customer.getNumberOfProductsInBasket() <= 5) {
+                Queue queue;
+                if (freePriorityQueues.isEmpty()) {
+                    queue = createQueue(true);
+                    queues.add(queue);
+                    sendInteractionCreateCheckout(queue.getId(), true);
+                    log("utworzono nową kase uprzywilejowana");
+                } else {
+                    int index = random.nextInt(freePriorityQueues.size());
+                    queue = freePriorityQueues.get(index);
+                    queue.getCustomerListIds().add(customer.getId());
+                    events.removeFirst();
+                    log("kolejka numer: " + queue.getId() + " , kolejka uprzywilejowana, " + queue.getCustomerListIds() );
+                }
             } else {
-                int index = random.nextInt(freeQueues.size());
-                queue = freeQueues.get(index);
+                Queue queue;
+                if (freeQueues.isEmpty()) {
+                    queue = createQueue(false);
+                    queues.add(queue);
+                    sendInteractionCreateCheckout(queue.getId(), false);
+                    log("utworzono nową kase zwykla");
+                } else {
+                    int index = random.nextInt(freeQueues.size());
+                    queue = freeQueues.get(index);
+                    queue.getCustomerListIds().add(customer.getId());
+                    events.removeFirst();
+                    log("kolejka numer: " + queue.getId() + " , kolejka zwykła " + queue.getCustomerListIds() );
+                }
             }
-            updateAttributeValues(queue, customer.getId());
+
+//            updateAttributeValues(queue, customer.getId());
 //            enterCheckout(event, enteredQueue.getCheckoutId());
+
         }
+    }
+
+    private List<Queue> findFreePriorityQueues() {
+        return queues.stream()
+                .filter(queue ->
+                        queue.getCustomerListIds().size() < maxQueueSize
+                                && queue.isPrivileged())
+                .collect(Collectors.toList());
     }
 
     private List<Queue> findFreeQueues() {
         return queues.stream()
-                .filter(queue -> queue.getCustomerListIds().size() < maxQueueSize)
+                .filter(queue ->
+                        queue.getCustomerListIds().size() < maxQueueSize
+                                && !queue.isPrivileged())
                 .collect(Collectors.toList());
     }
 
     private void createQueues() throws RTIexception {
         queues = new ArrayList<>();
         for (int i = 0; i < numberOfQueues; i++) {
-            Queue queue = createQueue();
+            boolean isPrivileged = random.nextBoolean();
+            Queue queue = createQueue(isPrivileged);
+            sendInteractionCreateCheckout(queue.getId(), isPrivileged);
             queues.add(queue);
+            log("utworzono kolejkę: " + queue.getId() + " , isPrivileged: " + isPrivileged);
         }
     }
 
-    private Queue createQueue() throws RTIexception {
-        Queue queue = new Queue(maxQueueSize);
+    private Queue createQueue(boolean isPrivileged) throws RTIexception {
+        Queue queue = new Queue(maxQueueSize, isPrivileged);
         ObjectInstanceHandle customerInstanceHandler = registerObject();
         queue.setHandler(customerInstanceHandler);
-        sendInteractionCreateCheckout(queue.getId());
         return queue;
     }
 
-    private void sendInteractionCreateCheckout(int checkoutId) throws RTIexception {
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
+    private void sendInteractionCreateCheckout(int checkoutId, boolean isPrivileged) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
+
         ParameterHandle checkoutIdHandle = createCheckoutHandleWrapper.getParameter("checkoutId");
         parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
+
+        ParameterHandle isPrivilegedHandle = createCheckoutHandleWrapper.getParameter("isPrivileged");
+        parameters.put(isPrivilegedHandle, Utils.booleanToByte(encoderFactory, isPrivileged));
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
         rtiamb.sendInteraction(createCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time);
 
-        log("(CreateCheckout) sent, checkoutId: " + checkoutId + " time: " + fedamb.federateTime);
+        log("(CreateCheckout) sent, checkoutId: " + checkoutId + ", isPrivileged: " + isPrivileged + " time: " + fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////

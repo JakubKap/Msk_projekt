@@ -327,13 +327,6 @@
     			</parameter>
     		</interactionClass>
     		<interactionClass>
-    			<name>CreateCheckout</name>
-    			<sharing>PublishSubscribe</sharing>
-    			<transportation>HLAreliable</transportation>
-    			<order>TimeStamp</order>
-    			<semantics>Zdarzenie dodania nowej kasy</semantics>
-    		</interactionClass>
-    		<interactionClass>
     			<name>EnterCheckout</name>
     			<sharing>PublishSubscribe</sharing>
     			<transportation>HLAreliable</transportation>
@@ -406,12 +399,17 @@
     			<sharing>PublishSubscribe</sharing>
     			<transportation>HLAreliable</transportation>
     			<order>TimeStamp</order>
-    			<semantics>Zdarzenie wyjścia klienta ze sklepu</semantics>
+    			<semantics>Zdarzenie dodania nowej kasy</semantics>
     			<parameter>
     				<name>checkoutId</name>
     				<dataType>HLAinteger32BE</dataType>
     				<semantics>Identyfikator kasy</semantics>
     			</parameter>
+				<parameter>
+					<name>isPrivileged</name>
+					<dataType>HLAinteger32BE</dataType>
+					<semantics>czy kolejka jest uprzywilejowana</semantics>
+				</parameter>
     		</interactionClass>
     	</interactionClass>
     </interactions>

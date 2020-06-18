@@ -266,11 +266,16 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
         } else if (interactionClass.equals(federate.createCheckoutHandleWrapper.getHandle())) {
             builder.append(" (createCheckout) received");
             int checkoutId = 0;
+            boolean isPrivileged = false;
             for (ParameterHandle parameter : theParameters.keySet()) {
                 if (parameter.equals(federate.createCheckoutHandleWrapper.getParameter("checkoutId"))) {
                     byte[] bytes = theParameters.get(parameter);
                     checkoutId = Utils.byteToInt(bytes);
                     builder.append(", checkoutId = " + checkoutId);
+                } else if (parameter.equals(federate.createCheckoutHandleWrapper.getParameter("isPrivileged"))) {
+                    byte[] bytes = theParameters.get(parameter);
+                    isPrivileged = Utils.byteToBoolean(bytes);
+                    builder.append(", isPrivileged = " + isPrivileged);
                 }
             }
             federate.createCheckoutEvents.add(new Event(interactionClass, theParameters));
