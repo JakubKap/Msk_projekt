@@ -19,7 +19,11 @@ import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 import utils.Event;
+import utils.TimeEvent;
 import utils.Utils;
+
+import java.util.Optional;
+import java.util.Random;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -47,6 +51,8 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
     protected boolean isAnnounced = false;
     protected boolean isReadyToRun = false;
     protected boolean isRunning = true;
+
+    private Random random = new Random();
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -240,7 +246,21 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
                 }
             }
 
-            federate.servicingCustomers.add(new Event(interactionClass, theParameters));
+            int searchedCheckoutId = checkoutId;
+
+            Optional<Checkout> optionalCheckout = this.federate.checkouts.stream()
+                    .filter(checkout -> checkout.getId() == searchedCheckoutId)
+                    .findFirst();
+            if (optionalCheckout.isPresent()) {
+                Checkout checkout = optionalCheckout.get();
+                if (checkout.isPrivileged()) {
+                    federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, random.nextInt(2) + 4));
+                } else {
+                    federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, random.nextInt(5) + 12));
+                }
+            }
+
+
         } else if (interactionClass.equals(federate.payHandle)) {
             builder.append(" (Pay) received");
             int customerId = 0;

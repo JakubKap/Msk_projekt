@@ -175,7 +175,6 @@ public class QueueFederate {
                 }
 
                 for (Queue queue : queues) {
-                    log("TEST " + queue);
                     Integer customerId = queue.getCustomerListIds().peek();
                     if (customerId != null && getCheckoutById(queue.getCheckoutId()) != null && getCheckoutById(queue.getCheckoutId()).isFree()) {
                         sendInteractionEnterCheckout(customerId, queue.getCheckoutId());
@@ -286,7 +285,7 @@ public class QueueFederate {
     private void createQueues() throws RTIexception {
         queues = new ArrayList<>();
         for (int i = 0; i < numberOfQueues; i++) {
-            boolean isPrivileged = random.nextBoolean();
+            boolean isPrivileged = false;
             Queue queue = createQueue(isPrivileged);
             sendInteractionCreateCheckout(queue.getId(), isPrivileged);
             queues.add(queue);

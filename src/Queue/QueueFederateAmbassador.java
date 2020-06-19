@@ -199,7 +199,7 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
                 }
             }
         } else {
-            int checkoutId = 0;
+            Integer checkoutId = null;
             boolean isFree = false;
             boolean isPriviliged = false;
 
@@ -226,17 +226,20 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
                 }
             }
 
-            int searchedCheckoutId = checkoutId;
+            Integer searchedCheckoutId = checkoutId;
 
-            Optional<Checkout> optionalCheckout = this.federate.checkouts.stream()
-                    .filter(checkout -> checkout.getId() == searchedCheckoutId)
-                    .findFirst();
-            if (optionalCheckout.isPresent()) {
-                optionalCheckout.get().setFree(isFree);
-                builder.append(" StateChange");
-            } else {
-                this.federate.checkouts.add(new Checkout(checkoutId, isPriviliged, isFree));
-                builder.append(" CREATE");
+            if (searchedCheckoutId != null) {
+
+                Optional<Checkout> optionalCheckout = this.federate.checkouts.stream()
+                        .filter(checkout -> checkout.getId() == searchedCheckoutId)
+                        .findFirst();
+                if (optionalCheckout.isPresent()) {
+                    optionalCheckout.get().setFree(isFree);
+                    builder.append(" StateChange");
+                } else {
+                    this.federate.checkouts.add(new Checkout(checkoutId, isPriviliged, isFree));
+                    builder.append(" CREATE");
+                }
             }
         }
 
