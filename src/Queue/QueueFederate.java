@@ -36,10 +36,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("Duplicates")
@@ -70,6 +67,13 @@ public class QueueFederate {
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected ParameterHandle customerIdParameterHandleEnterQueue;
     protected ParameterHandle numberOfProductsParameterHandleEnterQueue;
+
+    private Checkout getCheckoutById(int id) {
+        Optional<Checkout> optionalCheckout =  checkouts.stream()
+                .filter(checkout -> checkout.getId() == id)
+                .findFirst();
+        return optionalCheckout.orElse(null);
+    }
 
     /**
      * This is just a helper method to make sure all logging it output in the same form
@@ -170,9 +174,20 @@ public class QueueFederate {
                     createQueues();
                 }
 
+                for (Queue queue : queues) {
+                    log("TEST " + queue);
+                    Integer customerId = queue.getCustomerListIds().peek();
+                    if (customerId != null && getCheckoutById(queue.getCheckoutId()) != null && getCheckoutById(queue.getCheckoutId()).isFree()) {
+                        sendInteractionEnterCheckout(customerId, queue.getCheckoutId());
+                        queue.getCustomerListIds().removeFirst();
+                        log("kolejka numer: " + queue.getId() + " isPrivileged" + queue.isPrivileged() + " list: " + queue.getCustomerListIds());
+                    }
+                }
+
                 if (!events.isEmpty()) {
                     Event event = events.getFirst();
                     handleEnterQueueEvent(event);
+
                 }
             }
             advanceTime(1.0);
@@ -407,7 +422,7 @@ public class QueueFederate {
         log("Customer: " + customerId + " was added to queue: " + queue.getId());
     }
 
-    private void enterCheckout(int customerId, int checkoutId) throws RTIexception {
+    private void sendInteractionEnterCheckout(int customerId, int checkoutId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
         ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "checkoutId");

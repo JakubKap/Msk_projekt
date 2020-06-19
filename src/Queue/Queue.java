@@ -8,7 +8,7 @@ import java.util.List;
 public class Queue {
     private int id;
     private int maxLimit;
-    private List<Integer> customerListIds = new LinkedList<>();
+    private LinkedList<Integer> customerListIds = new LinkedList<>();
     private int checkoutId;
     private static int currentId = 0;
     private ObjectInstanceHandle handler;
@@ -37,11 +37,11 @@ public class Queue {
         this.maxLimit = maxLimit;
     }
 
-    public List<Integer> getCustomerListIds() {
+    public LinkedList<Integer> getCustomerListIds() {
         return customerListIds;
     }
 
-    public void setCustomerListIds(List<Integer> customerListIds) {
+    public void setCustomerListIds(LinkedList<Integer> customerListIds) {
         this.customerListIds = customerListIds;
     }
 
