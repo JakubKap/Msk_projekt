@@ -372,7 +372,7 @@ public class ManagerFederate extends Application {
     public void start(Stage primaryStage) throws Exception {
         Pane pane = FXMLLoader.load(getClass().getResource("../gui/sample.fxml"));
         primaryStage.setTitle("Hello World");
-        Scene scene = new Scene(pane, 1280, 660);
+        Scene scene = new Scene(pane, 500, 300);
         primaryStage.setScene(scene);
 //        primaryStage.setMaximized(true);
         primaryStage.show();
