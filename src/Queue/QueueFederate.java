@@ -58,7 +58,7 @@ public class QueueFederate {
     public int numberOfQueues;
     public int maxQueueSize;
     public List<Queue> queues;
-    public LinkedList<Event> events = new LinkedList<>();
+    public PriorityQueue<Event> events = new PriorityQueue<>();
     public LinkedList<Checkout> checkouts = new LinkedList<>();
     private Random random = new Random();
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
@@ -198,14 +198,15 @@ public class QueueFederate {
                 for (Queue queue : queues) {
                     Integer customerId = queue.getCustomerListIds().peek();
                     if (customerId != null && getCheckoutById(queue.getCheckoutId()) != null && getCheckoutById(queue.getCheckoutId()).isFree()) {
-                        sendInteractionEnterCheckout(customerId, queue.getCheckoutId());
+                        getCheckoutById(queue.getCheckoutId()).setFree(false);
+                        sendInteractionEnterCheckout(customerId, queue.getCheckoutId(), queue.isPrivileged());
                         queue.getCustomerListIds().removeFirst();
-                        log("kolejka numer: " + queue.getId() + " isPrivileged" + queue.isPrivileged() + " list: " + queue.getCustomerListIds());
+                        log("kolejka numer: " + queue.getId() + " isPrivileged: " + queue.isPrivileged() + " list: " + queue.getCustomerListIds());
                     }
                 }
 
                 if (!events.isEmpty()) {
-                    Event event = events.getFirst();
+                    Event event = events.peek();
                     handleEnterQueueEvent(event);
 
                 }
@@ -248,7 +249,7 @@ public class QueueFederate {
                     int index = random.nextInt(freePriorityQueues.size());
                     queue = freePriorityQueues.get(index);
                     queue.getCustomerListIds().add(customer.getId());
-                    events.removeFirst();
+                    events.poll();
                     log("kolejka numer: " + queue.getId() + " , kolejka uprzywilejowana, " + queue.getCustomerListIds() );
                 }
             } else {
@@ -262,7 +263,7 @@ public class QueueFederate {
                     int index = random.nextInt(freeQueues.size());
                     queue = freeQueues.get(index);
                     queue.getCustomerListIds().add(customer.getId());
-                    events.removeFirst();
+                    events.poll();
                     log("kolejka numer: " + queue.getId() + " , kolejka zwykła " + queue.getCustomerListIds() );
                 }
             }
@@ -292,7 +293,7 @@ public class QueueFederate {
     private void createQueues() throws RTIexception {
         queues = new ArrayList<>();
         for (int i = 0; i < numberOfQueues; i++) {
-            boolean isPrivileged = false;
+            boolean isPrivileged = random.nextBoolean();
             Queue queue = createQueue(isPrivileged);
             sendInteractionCreateCheckout(queue.getId(), isPrivileged);
             queues.add(queue);
@@ -368,10 +369,6 @@ public class QueueFederate {
         this.queueHandleWrapper.addAttributes("id", "maxLimit", "checkoutId");
         this.queueHandleWrapper.publish();
 
-        this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
-        this.customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
-        this.customerHandleWrapper.subscribe();
-
         this.checkoutHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Checkout");
         this.checkoutHandleWrapper.addAttributes("id", "isPrivileged", "isFree");
         this.checkoutHandleWrapper.subscribe();
@@ -404,12 +401,14 @@ public class QueueFederate {
     private ObjectInstanceHandle registerObject() throws RTIexception {
         return rtiamb.registerObjectInstance(queueHandleWrapper.getHandle());
     }
-    private void sendInteractionEnterCheckout(int customerId, int checkoutId) throws RTIexception {
-        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
+    private void sendInteractionEnterCheckout(int customerId, int checkoutId, boolean isPrivileged) throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(3);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
         ParameterHandle checkoutIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "checkoutId");
+        ParameterHandle isPrivilegedHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "isPrivileged");
         parameters.put(customerIdHandle, Utils.intToByte(encoderFactory, customerId));
         parameters.put(checkoutIdHandle, Utils.intToByte(encoderFactory, checkoutId));
+        parameters.put(isPrivilegedHandle, Utils.booleanToByte(encoderFactory, isPrivileged));
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
         rtiamb.sendInteraction(enterCheckoutHandleWrapper.getHandle(), parameters, generateTag(), time);

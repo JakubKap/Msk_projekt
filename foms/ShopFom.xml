@@ -338,6 +338,11 @@
     				<dataType>HLAinteger32BE</dataType>
     				<semantics>Identyfikator kasy</semantics>
     			</parameter>
+				<parameter>
+					<name>isPrivileged</name>
+					<dataType>HLAinteger32BE</dataType>
+					<semantics>czy kasa jest uprzywilejowana</semantics>
+				</parameter>
     		</interactionClass>
     		<interactionClass>
     			<name>ServicingCustomer</name>

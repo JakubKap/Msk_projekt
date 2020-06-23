@@ -231,7 +231,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                 builder.append(" received, customerId = " + customerId);
             }
 
-            federate.eventList.add(new Event(interactionClass, theParameters));
+            federate.eventList.add(new Event(interactionClass, theParameters, time));
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
             this.isRunning = false;

@@ -294,7 +294,7 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
                     builder.append(", numberOfProductsInBasket = " + numberOfProductsInBasket);
                 }
             }
-            this.federate.events.add(new Event(interactionClass, theParameters));
+            this.federate.events.add(new Event(interactionClass, theParameters, time));
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
             this.isRunning = false;

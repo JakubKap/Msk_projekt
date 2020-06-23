@@ -257,15 +257,25 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
         } else if (interactionClass.equals(federate.enterCheckoutHandleWrapper.getHandle())) {
             builder.append( " (EnterCheckout)" );
             int customerId = 0;
+            boolean isPrivileged = false;
             for(ParameterHandle parameter : theParameters.keySet()){
                 if (parameter.equals(federate.customerIdParameterHandleEnterCheckout)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
                     builder.append(", customerId = " + customerId);
+                } else if (parameter.equals(federate.isPrivilegedParameterHandleEnterCheckout)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    isPrivileged = Utils.byteToBoolean(bytes);
+                    builder.append(", isPrivileged = " + isPrivileged);
                 }
             }
 
             federate.statistics.clientsEnterCheckoutTimes.put(customerId, time);
+            if (isPrivileged) {
+                federate.statistics.clientsEnterPrivilegedCheckoutTimes.put(customerId, time);
+            } else {
+                federate.statistics.clientsEnterOrdinaryCheckoutTimes.put(customerId, time);
+            }
         } else if (interactionClass.equals(federate.enterQueueHandleWrapper.getHandle())) {
             builder.append( " (EnterQueue)" );
             int customerId = 0;

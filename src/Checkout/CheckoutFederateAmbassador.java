@@ -239,7 +239,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
                     builder.append(", customerId = " + customerId);
-                } else {
+                } else if (parameter.equals(federate.checkoutIdParameterHandleEnterCheckout)){
                     byte[] bytes = theParameters.get(parameter);
                     checkoutId = Utils.byteToInt(bytes);
                     builder.append(", checkoutId = " + checkoutId);
@@ -254,9 +254,11 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
             if (optionalCheckout.isPresent()) {
                 Checkout checkout = optionalCheckout.get();
                 if (checkout.isPrivileged()) {
-                    federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, random.nextInt(2) + 4));
+                    builder.append("WCHODZIMY DO UPRZYWILEJOWANEJ");
+                    federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, time, random.nextInt(5) + 5));
                 } else {
-                    federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, random.nextInt(5) + 12));
+                    builder.append("WCHODZIMY DO ZWYKEJ");
+                    federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, time,random.nextInt(5) + 20));
                 }
             }
 
@@ -282,7 +284,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
                 }
             }
 
-            federate.customersToExit.add(new Event(interactionClass, theParameters));
+            federate.customersToExit.add(new Event(interactionClass, theParameters, time));
         } else if (interactionClass.equals(federate.createCheckoutHandleWrapper.getHandle())) {
             builder.append(" (createCheckout) received");
             int checkoutId = 0;
@@ -298,7 +300,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
                     builder.append(", isPrivileged = " + isPrivileged);
                 }
             }
-            federate.createCheckoutEvents.add(new Event(interactionClass, theParameters));
+            federate.createCheckoutEvents.add(new Event(interactionClass, theParameters, time));
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())){
             builder.append(" (StopSimulation) received");
             this.isRunning = false;

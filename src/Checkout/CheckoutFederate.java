@@ -70,8 +70,8 @@ public class CheckoutFederate {
     public int numberOfCheckouts;
     public List<Checkout> checkouts;
     public Collection<TimeEvent> servicingCustomers = new CopyOnWriteArrayList<>();
-    public LinkedList<Event> customersToExit = new LinkedList<>();
-    public LinkedList<Event> createCheckoutEvents = new LinkedList<>();
+    public PriorityQueue<Event> customersToExit = new PriorityQueue<>();
+    public PriorityQueue<Event> createCheckoutEvents = new PriorityQueue<>();
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     private Random random = new Random();
 
@@ -130,7 +130,7 @@ public class CheckoutFederate {
                             if (parameter.equals(this.customerIdParameterHandleEnterCheckout)) {
                                 byte[] bytes = parameterHandleValueMap.get(parameter);
                                 customerId = Utils.byteToInt(bytes);
-                            } else {
+                            } else if (parameter.equals(this.checkoutIdParameterHandleEnterCheckout)) {
                                 byte[] bytes = parameterHandleValueMap.get(parameter);
                                 checkoutId = Utils.byteToInt(bytes);
                             }
@@ -155,7 +155,7 @@ public class CheckoutFederate {
             Event event = null;
 
             if (!customersToExit.isEmpty()) {
-                event = customersToExit.getFirst();
+                event = customersToExit.peek();
             }
 
             if (event != null && event.getInteractionClassHandle().equals(this.payHandle)) {
@@ -177,12 +177,11 @@ public class CheckoutFederate {
                 updateAttributeValues(checkout);
                 sendInteractionExitShop(customerId);
 
-                customersToExit.removeFirst();
+                customersToExit.poll();
             }
 
         }
         advanceTime(1.0);
-        log("Time Advanced to " + fedamb.federateTime);
     }
 
 
@@ -195,7 +194,7 @@ public class CheckoutFederate {
 
     private void handleCreateCheckoutEvent(Event event) throws RTIexception {
         int checkoutId = 0;
-        boolean isPrivileged = random.nextBoolean();
+        boolean isPrivileged = false;
         ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
         for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
             if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("checkoutId"))) {

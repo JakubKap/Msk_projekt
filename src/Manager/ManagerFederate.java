@@ -128,7 +128,6 @@ public class ManagerFederate extends Application {
             }
 
             advanceTime(1.0);
-            log("Time Advanced to " + fedamb.federateTime);
         }
 
         deleteObject(simulationParameters.getHandler());
@@ -139,12 +138,6 @@ public class ManagerFederate extends Application {
 
 
     private void publishAndSubscribe() throws RTIexception {
-        this.statisticsHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Statistics");
-        statisticsHandleWrapper.addAttributes(
-                "avgPayingDuration", "avgBeingInShopDuration", "avgBeingInQueueDuration", "avgBeingInCheckoutDuration",
-                "avgNumberOfProductsInBasket", "percentOfPrivilegedCheckouts", "avgNumberOfClientsInQueue");
-        statisticsHandleWrapper.subscribe();
-
         this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
         simulationParametersWrapper.addAttributes("maxQueueSize", "percentageOfCustomersDoingSmallShopping", "initialNumberOfCheckouts");
         simulationParametersWrapper.publish();
@@ -155,27 +148,6 @@ public class ManagerFederate extends Application {
 
         this.stopSimulationHandleWrapper =  new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
         this.stopSimulationHandleWrapper.publish();
-
-//        this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
-//        this.enterShopHandleWrapper.subscribe();
-//
-//        this.enterQueueHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterQueue");
-//        this.enterQueueHandleWrapper.subscribe();
-//
-//        this.enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterCheckout");
-//        this.enterCheckoutHandleWrapper.subscribe();
-//
-//        this.createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.CreateCheckout");
-//        this.createCheckoutHandleWrapper.subscribe();
-//
-//        this.servicingCustomerHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ServicingCustomer");
-//        this.servicingCustomerHandleWrapper.subscribe();
-//
-//        this.payHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.Pay");
-//        this.payHandleWrapper.subscribe();
-//
-//        this.exitShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.ExitShop");
-//        this.exitShopHandleWrapper.subscribe();
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {

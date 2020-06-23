@@ -59,8 +59,8 @@ public class CustomerFederate
     protected RtiInteractionClassHandleWrapper servicingCustomerHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
 
-    public LinkedList<Event> doingShoppingCustomers = new LinkedList<>();
-    public LinkedList<Event> servicingCustomers = new LinkedList<>();
+    public PriorityQueue<Event> doingShoppingCustomers = new PriorityQueue<>();
+    public PriorityQueue<Event> servicingCustomers = new PriorityQueue<>();
     private static Random random = new Random();
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     private List<Customer> customers = new ArrayList<>();
@@ -119,7 +119,7 @@ public class CustomerFederate
 
                 Event event = null;
                 if (!servicingCustomers.isEmpty()) {
-                    event = servicingCustomers.getFirst();
+                    event = servicingCustomers.peek();
                 }
 
                 if (event != null && event.getInteractionClassHandle().equals(this.servicingCustomerHandleWrapper.getHandle())) {
@@ -138,7 +138,7 @@ public class CustomerFederate
                     }
                     Customer servicingCustomer = customers.get(customerId);
                     pay(customerId, checkoutId, servicingCustomer.getValueOfProducts());
-                    servicingCustomers.removeFirst();
+                    servicingCustomers.poll();
                 }
             }
             advanceTime(1.0);
@@ -151,7 +151,7 @@ public class CustomerFederate
     private void updateCustomersWithBoughtProducts() throws RTIexception {
         Event event = null;
         if (!doingShoppingCustomers.isEmpty()) {
-            event = doingShoppingCustomers.getFirst();
+            event = doingShoppingCustomers.peek();
         }
 
         if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
@@ -174,7 +174,7 @@ public class CustomerFederate
             Customer customer = customers.get(customerId);
             updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
             enterQueue(customerId, customer.getNumberOfProductsInBasket());
-            doingShoppingCustomers.removeFirst();
+            doingShoppingCustomers.poll();
         }
     }
 
@@ -186,14 +186,6 @@ public class CustomerFederate
         this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
         customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
         customerHandleWrapper.publish();
-
-//        this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
-//        this.queueHandleWrapper.addAttributes("id", "maxLimit", "customerListIds", "checkoutId");
-//        this.queueHandleWrapper.subscribe();
-
-//        this.checkoutHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Checkout");
-//        checkoutHandleWrapper.addAttributes("id", "isPrivileged", "isFree");
-//        checkoutHandleWrapper.subscribe();
 
         this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
         this.enterShopHandleWrapper.publish();

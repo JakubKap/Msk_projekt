@@ -32,10 +32,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 @SuppressWarnings("Duplicates")
 public class ProductFederate {
@@ -64,7 +61,7 @@ public class ProductFederate {
 
     protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
-    public LinkedList<Event> eventList = new LinkedList<>();
+    public PriorityQueue<Event> eventList = new PriorityQueue<>();
 
     public int customerCounter = 0;
     protected int percentageOfCustomersDoingSmallShopping;
@@ -97,7 +94,7 @@ public class ProductFederate {
 
             Event event = null;
             if (!eventList.isEmpty()) {
-                event = eventList.getFirst();
+                event = eventList.peek();
             }
 
             if (event != null && event.getInteractionClassHandle().equals(this.enterShopHandleWrapper.getHandle())) {
@@ -108,7 +105,7 @@ public class ProductFederate {
                     customerId = Utils.byteToInt(bytes);
                     endShopping(customerId);
                 }
-                eventList.removeFirst();
+                eventList.poll();
             }
 
             advanceTime( 1.0 );
@@ -122,17 +119,14 @@ public class ProductFederate {
 
     private void publishAndSubscribe() throws RTIexception {
         this.endShoppingHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EndShopping");
-        this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
         this.endShoppingHandleWrapper.publish();
+
+        this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
         this.enterShopHandleWrapper.subscribe();
 
         this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
         simulationParametersWrapper.addAttributes("percentageOfCustomersDoingSmallShopping");
         simulationParametersWrapper.subscribe();
-
-//        this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
-//        customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
-//        customerHandleWrapper.publish();
 
         this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
         this.stopSimulationHandleWrapper.subscribe();
@@ -177,7 +171,7 @@ public class ProductFederate {
 
 
         int numberOfProductsInBasket;
-        if(random.nextDouble() *100 <= percentageOfCustomersDoingSmallShopping)
+        if((random.nextDouble() *100) <= percentageOfCustomersDoingSmallShopping)
             numberOfProductsInBasket = random.nextInt(5) + 1;
         else
             numberOfProductsInBasket = random.nextInt(5) + 6;

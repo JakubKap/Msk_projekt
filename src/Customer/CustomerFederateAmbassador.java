@@ -277,7 +277,7 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                 }
             }
 
-            federate.doingShoppingCustomers.add(new Event(interactionClass, theParameters));
+            federate.doingShoppingCustomers.add(new Event(interactionClass, theParameters, time));
         } else if( interactionClass.equals(federate.servicingCustomerHandleWrapper.getHandle())) {
             builder.append( " (ServivingCustomer) received" );
             int customerId = 0;
@@ -294,7 +294,7 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                 }
             }
 
-            federate.servicingCustomers.add(new Event(interactionClass, theParameters));
+            federate.servicingCustomers.add(new Event(interactionClass, theParameters, time));
         } else if( interactionClass.equals(federate.exitShopHandleWrapper.getHandle())) {
             builder.append( " (ExitShop) received" );
             int customerId = 0;

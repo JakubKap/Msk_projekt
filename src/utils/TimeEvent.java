@@ -1,13 +1,15 @@
 package utils;
 
 import hla.rti1516e.InteractionClassHandle;
+import hla.rti1516e.LogicalTime;
 import hla.rti1516e.ParameterHandleValueMap;
 
 public class TimeEvent extends Event {
     private int intervalTime;
     private int currentTime;
-    public TimeEvent(InteractionClassHandle interactionClassHandle, ParameterHandleValueMap parameterHandleValueMap, int intervalTime) {
-        super(interactionClassHandle, parameterHandleValueMap);
+
+    public TimeEvent(InteractionClassHandle interactionClassHandle, ParameterHandleValueMap parameterHandleValueMap, LogicalTime time, int intervalTime) {
+        super(interactionClassHandle, parameterHandleValueMap, time);
         this.intervalTime = intervalTime;
     }
 

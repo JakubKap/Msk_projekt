@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Statistics {
     private double avgPayingDuration;
@@ -25,6 +27,9 @@ public class Statistics {
     Map<Integer, LogicalTime> clientsEnterCheckoutTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsEnterQueueTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsPayTimes = new HashMap<>();
+
+    Map<Integer, LogicalTime> clientsEnterOrdinaryCheckoutTimes = new HashMap<>();
+    Map<Integer, LogicalTime> clientsEnterPrivilegedCheckoutTimes = new HashMap<>();
 
     List<Integer> clientNumberOfProducts = new LinkedList<>();
 
@@ -72,6 +77,38 @@ public class Statistics {
             sumOfTimes += (endPay - enterQueue);
         }
         return sumOfTimes / clientsPayTimes.size();
+    }
+
+    public double getAvgBeingInOrdinaryCheckoutDuration() {
+        double sumOfTimes = 0;
+        Map<Integer, LogicalTime> clientsInOrdinaryCheckoutPayTimes = clientsPayTimes
+                .keySet()
+                .stream()
+                .filter(clientsEnterOrdinaryCheckoutTimes::containsKey)
+                .collect(Collectors.toMap(Function.identity(), clientsPayTimes::get));
+
+        for(Map.Entry<Integer, LogicalTime> entry: clientsInOrdinaryCheckoutPayTimes.entrySet()) {
+            double enterQueue = ((HLAfloat64Time)clientsEnterOrdinaryCheckoutTimes.get(entry.getKey())).getValue();
+            double endPay = ((HLAfloat64Time)clientsInOrdinaryCheckoutPayTimes.get(entry.getKey())).getValue();
+            sumOfTimes += (endPay - enterQueue);
+        }
+        return sumOfTimes / clientsInOrdinaryCheckoutPayTimes.size();
+    }
+
+    public double getAvgBeingInPrivilegedCheckoutDuration() {
+        double sumOfTimes = 0;
+        Map<Integer, LogicalTime> clientsInPrivilegedCheckoutPayTimes = clientsPayTimes
+                .keySet()
+                .stream()
+                .filter(clientsEnterPrivilegedCheckoutTimes::containsKey)
+                .collect(Collectors.toMap(Function.identity(), clientsPayTimes::get));
+
+        for(Map.Entry<Integer, LogicalTime> entry: clientsInPrivilegedCheckoutPayTimes.entrySet()) {
+            double enterQueue = ((HLAfloat64Time)clientsEnterPrivilegedCheckoutTimes.get(entry.getKey())).getValue();
+            double endPay = ((HLAfloat64Time)clientsInPrivilegedCheckoutPayTimes.get(entry.getKey())).getValue();
+            sumOfTimes += (endPay - enterQueue);
+        }
+        return sumOfTimes / clientsInPrivilegedCheckoutPayTimes.size();
     }
 
     public double getAvgNumberOfProductsInBasket(){

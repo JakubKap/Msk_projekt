@@ -63,10 +63,12 @@ public class StatisticsFederate
     public ParameterHandle customerIdParameterHandlePay;
     protected ParameterHandle numberOfProductsInBasketParameterHandleEnterQueue;
     protected ParameterHandle isPrivilegedParameterHandleCreateCheckout;
+    protected ParameterHandle isPrivilegedParameterHandleEnterCheckout;
 
     protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
     protected Statistics statistics = new Statistics();
+
 
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
@@ -93,19 +95,18 @@ public class StatisticsFederate
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-//        ObjectInstanceHandle objectHandle = registerObject();
 
         while( fedamb.isRunning )
         {
-//            updateAttributeValues( objectHandle );
 
             advanceTime( 1.0 );
-            log( "Time Advanced to " + fedamb.federateTime );
         }
 
         System.out.println("AvgBeingInShopDuration: " + statistics.getAvgBeingInShopDuration());
         System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
         System.out.println("AvgBeingInCheckoutDuration: " + statistics.getAvgBeingInCheckoutDuration());
+        System.out.println("AvgBeingInOrdinaryCheckoutDuration: " + statistics.getAvgBeingInOrdinaryCheckoutDuration());
+        System.out.println("AvgBeingInPrivilegedCheckoutDuration: " + statistics.getAvgBeingInPrivilegedCheckoutDuration());
         System.out.println("avgNumberOfProductsInBasket: " + statistics.getAvgNumberOfProductsInBasket());
         System.out.println("percentOfPrivilegedCheckouts: " + statistics.getPercentageOfPrivilegedCheckouts());
 
@@ -114,12 +115,6 @@ public class StatisticsFederate
     }
 
     private void publishAndSubscribe() throws RTIexception {
-        this.statisticsHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Statistics");
-        this.statisticsHandleWrapper.addAttributes(
-                "avgPayingDuration", "avgBeingInShopDuration", "avgBeingInQueueDuration", "avgBeingInCheckoutDuration",
-                "avgNumberOfProductsInBasket", "percentOfPrivilegedCheckouts", "avgNumberOfClientsInQueue");
-        this.statisticsHandleWrapper.publish();
-
         this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
         this.queueHandleWrapper.addAttributes("id", "maxLimit", "checkoutId");
         this.queueHandleWrapper.subscribe();
@@ -145,6 +140,8 @@ public class StatisticsFederate
         enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.EnterCheckout");
         enterCheckoutHandleWrapper.subscribe();
 
+        isPrivilegedParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "isPrivileged");
+
         createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.CreateCheckout");
         createCheckoutHandleWrapper.subscribe();
 
@@ -165,23 +162,6 @@ public class StatisticsFederate
 
         this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
         this.stopSimulationHandleWrapper.subscribe();
-    }
-
-    private ObjectInstanceHandle registerObject() throws RTIexception {
-        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(queueHandleWrapper.getHandle());
-        log("Registered Object, handle=" + objectInstanceHandle);
-        return objectInstanceHandle;
-    }
-
-    private void updateAttributeValues( ObjectInstanceHandle objectHandle ) throws RTIexception {
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
-        rtiamb.updateAttributeValues( objectHandle, attributes, generateTag(), time );
-    }
-
-    private void deleteObject( ObjectInstanceHandle handle ) throws RTIexception {
-        rtiamb.deleteObjectInstance( handle, generateTag() );
-        log("Deleted Object, handle=" + handle);
     }
 
     ////////////////////////////////////////////////////////////////////////////
