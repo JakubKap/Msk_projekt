@@ -269,15 +269,22 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
         } else if (interactionClass.equals(federate.enterQueueHandleWrapper.getHandle())) {
             builder.append( " (EnterQueue)" );
             int customerId = 0;
+            int numOfProductsInBasket = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
                 if (parameter.equals(federate.customerIdParameterHandleEnterQueue)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
                     builder.append(", customerId = " + customerId);
                 }
+                else if(parameter.equals(federate.numberOfProductsInBasketParameterHandleEnterQueue)){
+                    byte[] bytes = theParameters.get(parameter);
+                    numOfProductsInBasket = Utils.byteToInt(bytes);
+                    builder.append(", numOfProductsInBasket = " + numOfProductsInBasket);
+                }
             }
 
             federate.statistics.clientsEnterQueueTimes.put(customerId, time);
+            federate.statistics.clientNumberOfProducts.add(numOfProductsInBasket);
         }
         else if(interactionClass.equals(federate.payHandleWrapper.getHandle())){
             builder.append( " (Pay)" );
@@ -294,6 +301,20 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
             this.isRunning = false;
+        }  else if(interactionClass.equals(federate.createCheckoutHandleWrapper.getHandle())){
+            builder.append( " (CreateCheckout)" );
+            boolean isPrivileged = false;
+            for(ParameterHandle parameter : theParameters.keySet()){
+                if (parameter.equals(federate.isPrivilegedParameterHandleCreateCheckout)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    isPrivileged = Utils.byteToBoolean(bytes);
+                    builder.append(", isPrivileged = " + isPrivileged);
+                }
+            }
+            if(isPrivileged)
+                federate.statistics.incNumOfPrivilegedCheckouts();
+            else
+                federate.statistics.incNumOfOrdinaryCheckouts();
         }
 
 

@@ -56,10 +56,13 @@ public class StatisticsFederate
     protected RtiInteractionClassHandleWrapper servicingCustomerHandleWrapper;
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
+    protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
 
     public ParameterHandle customerIdParameterHandleEnterCheckout;
     public ParameterHandle customerIdParameterHandleEnterQueue;
     public ParameterHandle customerIdParameterHandlePay;
+    protected ParameterHandle numberOfProductsInBasketParameterHandleEnterQueue;
+    protected ParameterHandle isPrivilegedParameterHandleCreateCheckout;
 
     protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
@@ -103,6 +106,8 @@ public class StatisticsFederate
         System.out.println("AvgBeingInShopDuration: " + statistics.getAvgBeingInShopDuration());
         System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
         System.out.println("AvgBeingInCheckoutDuration: " + statistics.getAvgBeingInCheckoutDuration());
+        System.out.println("avgNumberOfProductsInBasket: " + statistics.getAvgNumberOfProductsInBasket());
+        System.out.println("percentOfPrivilegedCheckouts: " + statistics.getPercentageOfPrivilegedCheckouts());
 
         resignFederation();
         destroyFederation();
@@ -135,8 +140,15 @@ public class StatisticsFederate
 
         customerIdParameterHandleEnterQueue = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "customerId");
 
+        numberOfProductsInBasketParameterHandleEnterQueue = rtiamb.getParameterHandle(enterQueueHandleWrapper.getHandle(), "numberOfProductsInBasket");
+
         enterCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.EnterCheckout");
         enterCheckoutHandleWrapper.subscribe();
+
+        createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.CreateCheckout");
+        createCheckoutHandleWrapper.subscribe();
+
+        isPrivilegedParameterHandleCreateCheckout = rtiamb.getParameterHandle(createCheckoutHandleWrapper.getHandle(), "isPrivileged");
 
         customerIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
 

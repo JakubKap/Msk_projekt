@@ -4,6 +4,8 @@ import hla.rti1516e.LogicalTime;
 import hla.rti1516e.time.HLAfloat64Time;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class Statistics {
@@ -15,12 +17,16 @@ public class Statistics {
     private int percentOfPrivilegedCheckouts;
     private int avgNumberOfClientsInQueue;
 
+    private int numOfOrdinaryCheckouts = 0;
+    private int numOfPrivilegedCheckouts = 0;
+
     Map<Integer, LogicalTime> clientsEnterShopTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsExitShopTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsEnterCheckoutTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsEnterQueueTimes = new HashMap<>();
     Map<Integer, LogicalTime> clientsPayTimes = new HashMap<>();
 
+    List<Integer> clientNumberOfProducts = new LinkedList<>();
 
     public double getAvgPayingDuration() {
         return avgPayingDuration;
@@ -68,24 +74,21 @@ public class Statistics {
         return sumOfTimes / clientsPayTimes.size();
     }
 
+    public double getAvgNumberOfProductsInBasket(){
+        double sumOfProductsCount=0;
+
+        for(Integer productCount : clientNumberOfProducts)
+            sumOfProductsCount += productCount;
+
+        return sumOfProductsCount/(clientNumberOfProducts.size());
+    }
+
     public void setAvgBeingInCheckoutDuration(float avgBeingInCheckoutDuration) {
         this.avgBeingInCheckoutDuration = avgBeingInCheckoutDuration;
     }
 
-    public int getAvgNumberOfProductsInBasket() {
-        return avgNumberOfProductsInBasket;
-    }
-
     public void setAvgNumberOfProductsInBasket(int avgNumberOfProductsInBasket) {
         this.avgNumberOfProductsInBasket = avgNumberOfProductsInBasket;
-    }
-
-    public int getPercentOfPrivilegedCheckouts() {
-        return percentOfPrivilegedCheckouts;
-    }
-
-    public void setPercentOfPrivilegedCheckouts(int percentOfPrivilegedCheckouts) {
-        this.percentOfPrivilegedCheckouts = percentOfPrivilegedCheckouts;
     }
 
     public int getAvgNumberOfClientsInQueue() {
@@ -94,5 +97,17 @@ public class Statistics {
 
     public void setAvgNumberOfClientsInQueue(int avgNumberOfClientsInQueue) {
         this.avgNumberOfClientsInQueue = avgNumberOfClientsInQueue;
+    }
+
+    public void incNumOfOrdinaryCheckouts(){
+        numOfOrdinaryCheckouts++;
+    }
+
+    public void incNumOfPrivilegedCheckouts(){
+        numOfPrivilegedCheckouts++;
+    }
+
+    public double getPercentageOfPrivilegedCheckouts(){
+        return (double)(100*numOfPrivilegedCheckouts)/(numOfOrdinaryCheckouts + numOfPrivilegedCheckouts);
     }
 }
