@@ -50,6 +50,7 @@ public class ManagerFederate extends Application {
     protected RtiObjectClassHandleWrapper statisticsHandleWrapper;
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiInteractionClassHandleWrapper startSimulationHandleWrapper;
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterCheckoutHandleWrapper;
@@ -60,6 +61,7 @@ public class ManagerFederate extends Application {
 
 
     private boolean simulationStarted = false;
+    private boolean simulationStopped = false;
     private boolean startSimulationInteractionSent = false;
 
     private SimulationParameters simulationParameters;
@@ -78,6 +80,10 @@ public class ManagerFederate extends Application {
 
     public void setSimulationStarted(boolean simulationStarted) {
         this.simulationStarted = simulationStarted;
+    }
+
+    public void setSimulationStopped(boolean simulationStopped) {
+        this.simulationStopped = simulationStopped;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -116,12 +122,16 @@ public class ManagerFederate extends Application {
                 updateAttributeValues(simulationParameters);
                 simulationStarted = false;
             }
+            if(simulationStopped){
+                    fedamb.isRunning = false;
+                    stopSimulation();
+            }
 
             advanceTime(1.0);
             log("Time Advanced to " + fedamb.federateTime);
         }
 
-//        deleteObject(objectHandle);
+        deleteObject(simulationParameters.getHandler());
         resignFederation();
         destroyFederation();
     }
@@ -142,6 +152,9 @@ public class ManagerFederate extends Application {
 
         this.startSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StartSimulation");
         this.startSimulationHandleWrapper.publish();
+
+        this.stopSimulationHandleWrapper =  new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
+        this.stopSimulationHandleWrapper.publish();
 
 //        this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
 //        this.enterShopHandleWrapper.subscribe();
@@ -192,6 +205,15 @@ public class ManagerFederate extends Application {
         rtiamb.sendInteraction( startSimulationHandleWrapper.getHandle(), parameters, generateTag(), time );
 
         log("(StartSimulation) sent" + fedamb.federateTime);
+    }
+
+    private void stopSimulation() throws RTIexception {
+        ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(0);
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        rtiamb.sendInteraction( stopSimulationHandleWrapper.getHandle(), parameters, generateTag(), time );
+
+        log("(StopSimulation) sent" + fedamb.federateTime);
     }
 
     private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {

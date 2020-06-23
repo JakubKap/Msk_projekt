@@ -251,7 +251,11 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
         if( interactionClass.equals(federate.startSimulationHandleWrapper.getHandle())) {
             builder.append(" (StartSimulation) received");
             federate.setSimulationStarted(true);
-        } else if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
+        } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
+            builder.append(" (StopSimulation) received");
+            this.isRunning = false;
+        }
+        else if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
         {
             builder.append( " (EndShopping) received" );
             int customerId = 0;

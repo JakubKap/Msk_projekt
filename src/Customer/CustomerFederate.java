@@ -54,6 +54,7 @@ public class CustomerFederate
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper startSimulationHandleWrapper;
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
     protected RtiInteractionClassHandleWrapper endShoppingHandleWrapper;
     protected RtiInteractionClassHandleWrapper servicingCustomerHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
@@ -142,7 +143,6 @@ public class CustomerFederate
             }
             advanceTime(1.0);
         }
-
         deleteObject();
         resignFederation();
         destroyFederation();
@@ -210,6 +210,9 @@ public class CustomerFederate
 
         this.startSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StartSimulation");
         this.startSimulationHandleWrapper.subscribe();
+
+        this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
+        this.stopSimulationHandleWrapper.subscribe();
 
         this.endShoppingHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EndShopping");
         this.endShoppingHandleWrapper.subscribe();

@@ -240,10 +240,6 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             for(ParameterHandle parameter : theParameters.keySet()){
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
-                //TODO obsluz interakajca StopSimulation
-                if (customerId >= 10) {
-                    this.isRunning = false;
-                }
                 builder.append(" received, customerId = " + customerId);
             }
 
@@ -295,6 +291,9 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             }
 
             federate.statistics.clientsPayTimes.put(customerId, time);
+        } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
+            builder.append(" (StopSimulation) received");
+            this.isRunning = false;
         }
 
 

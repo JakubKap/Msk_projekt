@@ -299,6 +299,9 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
                 }
             }
             federate.createCheckoutEvents.add(new Event(interactionClass, theParameters));
+        } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())){
+            builder.append(" (StopSimulation) received");
+            this.isRunning = false;
         }
 
         // print the handle

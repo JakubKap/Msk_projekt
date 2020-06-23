@@ -61,6 +61,8 @@ public class StatisticsFederate
     public ParameterHandle customerIdParameterHandleEnterQueue;
     public ParameterHandle customerIdParameterHandlePay;
 
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
+
     protected Statistics statistics = new Statistics();
 
     ///////////////////////////////////////////////////////////////////////////
@@ -102,8 +104,6 @@ public class StatisticsFederate
         System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
         System.out.println("AvgBeingInCheckoutDuration: " + statistics.getAvgBeingInCheckoutDuration());
 
-
-//        deleteObject(objectHandle);
         resignFederation();
         destroyFederation();
     }
@@ -116,7 +116,7 @@ public class StatisticsFederate
         this.statisticsHandleWrapper.publish();
 
         this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
-        this.queueHandleWrapper.addAttributes("id", "maxLimit", "customerListIds", "checkoutId");
+        this.queueHandleWrapper.addAttributes("id", "maxLimit", "checkoutId");
         this.queueHandleWrapper.subscribe();
 
         this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
@@ -150,6 +150,9 @@ public class StatisticsFederate
 
         exitShopHandleWrapper = new RtiInteractionClassHandleWrapper(rtiamb, "HLAinteractionRoot.ExitShop");
         exitShopHandleWrapper.subscribe();
+
+        this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
+        this.stopSimulationHandleWrapper.subscribe();
     }
 
     private ObjectInstanceHandle registerObject() throws RTIexception {

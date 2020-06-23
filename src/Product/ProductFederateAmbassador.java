@@ -232,6 +232,9 @@ class ProductFederateAmbassador extends NullFederateAmbassador
             }
 
             federate.eventList.add(new Event(interactionClass, theParameters));
+        } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
+            builder.append(" (StopSimulation) received");
+            this.isRunning = false;
         }
 
         builder.append( ", tag=" + new String(tag) );

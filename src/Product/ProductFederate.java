@@ -62,6 +62,8 @@ public class ProductFederate {
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
 
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
+
     public LinkedList<Event> eventList = new LinkedList<>();
 
     public int customerCounter = 0;
@@ -109,8 +111,8 @@ public class ProductFederate {
                 eventList.removeFirst();
             }
 
-//            advanceTime( 1.0 );
-            advanceTime( random.nextInt(9) + 1 );
+            advanceTime( 1.0 );
+//            advanceTime( random.nextInt(9) + 1 );
         }
 
 //        deleteObject(objectHandle);
@@ -131,6 +133,9 @@ public class ProductFederate {
 //        this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
 //        customerHandleWrapper.addAttributes("id", "numberOfProductsInBasket", "valueOfProducts");
 //        customerHandleWrapper.publish();
+
+        this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
+        this.stopSimulationHandleWrapper.subscribe();
 
         log("Published and Subscribed");
     }

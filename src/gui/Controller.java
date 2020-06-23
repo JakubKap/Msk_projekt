@@ -93,5 +93,7 @@ public class Controller {
     private void stopSimulation(ActionEvent event) {
         disableStartStopSimulationBtns(true);
         clearTextFields();
+
+        managerFederate.setSimulationStopped(true);
     }
 }

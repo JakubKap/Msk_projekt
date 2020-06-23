@@ -60,6 +60,7 @@ public class CheckoutFederate {
     protected InteractionClassHandle payHandle;
     protected InteractionClassHandle exitShopHandle;
     protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
     protected ParameterHandle customerIdParameterHandlePay;
     protected ParameterHandle checkoutIdParameterHandlePay;
@@ -107,7 +108,6 @@ public class CheckoutFederate {
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-        ObjectInstanceHandle objectHandle = registerObject();
 
         while (fedamb.isRunning) {
             boolean simulationStarted = numberOfCheckouts != 0;
@@ -186,7 +186,7 @@ public class CheckoutFederate {
     }
 
 
-        deleteObject(objectHandle);
+        deleteObject();
 
         resignFederation();
 
@@ -272,6 +272,9 @@ public class CheckoutFederate {
         simulationParametersWrapper.addAttributes("initialNumberOfCheckouts");
         simulationParametersWrapper.subscribe();
 
+        this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
+        this.stopSimulationHandleWrapper.subscribe();
+
         log("Published and Subscribed");
     }
 
@@ -320,9 +323,11 @@ public class CheckoutFederate {
         log("(ExitShop) sent, customerId: " + customerId + " time: " + fedamb.federateTime);
     }
 
-    private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
-        rtiamb.deleteObjectInstance(handle, generateTag());
-        log("Deleted Object, handle=" + handle);
+    private void deleteObject() throws RTIexception {
+        for(Checkout checkout : checkouts) {
+            rtiamb.deleteObjectInstance(checkout.getHandler(), generateTag());
+            log("Deleted Object, handle=" + checkout.getHandler());
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////

@@ -114,17 +114,6 @@
                     <semantics>Maksymalna liczba osób w kolejce</semantics>
                 </attribute>
                 <attribute>
-                    <name>customerListIds</name>
-                    <dataType>HLAvariableArray</dataType>
-                    <updateType>Conditional</updateType>
-                    <updateCondition>On Change</updateCondition>
-                    <ownership>Divest</ownership>
-                    <sharing>PublishSubscribe</sharing>
-                    <transportation>HLAreliable</transportation>
-                    <order>TimeStamp</order>
-                    <semantics>Identyfikatory klientów ustawionych w kolejce</semantics>
-                </attribute>
-                <attribute>
                     <name>checkoutId</name>
                     <dataType>HLAinteger32BE</dataType>
                     <updateType>Conditional</updateType>
@@ -268,6 +257,13 @@
     			<order>TimeStamp</order>
     			<semantics>Zdarzenie rozpoczynające symulację</semantics>
     		</interactionClass>
+			<interactionClass>
+				<name>StopSimulation</name>
+				<sharing>PublishSubscribe</sharing>
+				<transportation>HLAreliable</transportation>
+				<order>TimeStamp</order>
+				<semantics>Zdarzenie kończące symulację</semantics>
+			</interactionClass>
     		<interactionClass>
     			<name>EndSimulation</name>
     			<sharing>PublishSubscribe</sharing>

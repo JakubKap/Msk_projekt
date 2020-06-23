@@ -19,10 +19,7 @@ import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAvariableArray;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -68,6 +65,8 @@ public class QueueFederate {
     protected ParameterHandle customerIdParameterHandleEnterQueue;
     protected ParameterHandle numberOfProductsParameterHandleEnterQueue;
 
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
+
     private Checkout getCheckoutById(int id) {
         Optional<Checkout> optionalCheckout =  checkouts.stream()
                 .filter(checkout -> checkout.getId() == id)
@@ -93,6 +92,28 @@ public class QueueFederate {
         } catch (Exception e) {
             log("Error while waiting for user input: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+    private void destroyFederation() throws NotConnected, RTIinternalError {
+        try {
+            rtiamb.destroyFederationExecution("Federation");
+            log("Destroyed Federation");
+        } catch (FederationExecutionDoesNotExist dne) {
+            log("No need to destroy federation, it doesn't exist");
+        } catch (FederatesCurrentlyJoined fcj) {
+            log("Didn't destroy federation, federates still joined");
+        }
+    }
+
+    private void resignFederation() throws Exception {
+        rtiamb.resignFederationExecution(ResignAction.DELETE_OBJECTS);
+        log("Resigned from Federation");
+    }
+
+    private void deleteObject() throws RTIexception {
+        for (Queue queue : queues) {
+            rtiamb.deleteObjectInstance(queue.getHandler(), generateTag());
+            log("Deleted Object, handle=" + queue.getHandler());
         }
     }
 
@@ -193,23 +214,9 @@ public class QueueFederate {
             log("Time Advanced to " + fedamb.federateTime);
         }
 
-        for (Queue queue : queues) {
-            deleteObject(queue.getHandler());
-        }
-//        deleteObject( objectHandle );
-//        log( "Deleted Object, handle=" + objectHandle );
-
-        rtiamb.resignFederationExecution(ResignAction.DELETE_OBJECTS);
-        log("Resigned from Federation");
-
-        try {
-            rtiamb.destroyFederationExecution("Federation");
-            log("Destroyed Federation");
-        } catch (FederationExecutionDoesNotExist dne) {
-            log("No need to destroy federation, it doesn't exist");
-        } catch (FederatesCurrentlyJoined fcj) {
-            log("Didn't destroy federation, federates still joined");
-        }
+        deleteObject();
+        resignFederation();
+        destroyFederation();
     }
 
     private void handleEnterQueueEvent(Event event) throws RTIexception {
@@ -358,7 +365,7 @@ public class QueueFederate {
      */
     private void publishAndSubscribe() throws RTIexception {
         this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
-        this.queueHandleWrapper.addAttributes("id", "maxLimit", "customerListIds", "checkoutId");
+        this.queueHandleWrapper.addAttributes("id", "maxLimit", "checkoutId");
         this.queueHandleWrapper.publish();
 
         this.customerHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Customer");
@@ -384,6 +391,9 @@ public class QueueFederate {
 
         this.createCheckoutHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.CreateCheckout");
         this.createCheckoutHandleWrapper.publish();
+
+        this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
+        this.stopSimulationHandleWrapper.subscribe();
     }
 
     /**
@@ -394,33 +404,6 @@ public class QueueFederate {
     private ObjectInstanceHandle registerObject() throws RTIexception {
         return rtiamb.registerObjectInstance(queueHandleWrapper.getHandle());
     }
-
-    /**
-     * This method will update all the values of the given object instance. It will
-     * set the flavour of the soda to a random value from the options specified in
-     * the FOM (Cola - 101, Orange - 102, RootBeer - 103, Cream - 104) and it will set
-     * the number of cups to the same value as the current time.
-     * <p/>
-     * Note that we don't actually have to update all the attributes at once, we
-     * could update them individually, in groups or not at all!
-     */
-    private void updateAttributeValues(Queue queue, int customerId) throws RTIexception {
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(1);
-
-        List<Integer> customerIds = queue.getCustomerListIds();
-        customerIds.add(customerId);
-        log("Queue number: " + queue.getId() + " customerList: " + queue.getCustomerListIds());
-
-        HLAvariableArray customerIdsList = new CustomersArray(customerIds);
-
-        attributes.put(queueHandleWrapper.getAttribute("customerListIds"), customerIdsList.toByteArray());
-
-        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-        rtiamb.updateAttributeValues(queue.getHandler(), attributes, generateTag(), time);
-
-        log("Customer: " + customerId + " was added to queue: " + queue.getId());
-    }
-
     private void sendInteractionEnterCheckout(int customerId, int checkoutId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(2);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
