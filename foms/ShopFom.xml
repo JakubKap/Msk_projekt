@@ -409,7 +409,7 @@
 				<parameter>
 					<name>isPrivileged</name>
 					<dataType>HLAinteger32BE</dataType>
-					<semantics>czy kolejka jest uprzywilejowana</semantics>
+					<semantics>czy kasa jest uprzywilejowana</semantics>
 				</parameter>
     		</interactionClass>
     	</interactionClass>

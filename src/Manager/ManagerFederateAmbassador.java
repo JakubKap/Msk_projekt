@@ -173,24 +173,6 @@ class ManagerFederateAmbassador extends NullFederateAmbassador
                                         SupplementalReflectInfo reflectInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-
-        // print the handle
-        builder.append( " handle=" + theObject );
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the attribute information
-        builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
-
-        log( builder.toString() );
     }
 
     @Override
@@ -226,35 +208,6 @@ class ManagerFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Interaction Received:" );
-
-        // print the handle
-
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the parameer information
-        builder.append( ", parameterCount=" + theParameters.size() );
-        builder.append( "\n" );
-        for( ParameterHandle parameter : theParameters.keySet() )
-        {
-            // print the parameter handle
-            builder.append( "\tparamHandle=" );
-            builder.append( parameter );
-            // print the parameter value
-            builder.append( ", paramValue=" );
-            builder.append( theParameters.get(parameter).length );
-            builder.append( " bytes" );
-            builder.append( "\n" );
-        }
-
-        log( builder.toString() );
     }
 
     @Override

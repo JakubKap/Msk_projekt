@@ -50,7 +50,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     private void log( String message )
     {
-        System.out.println( "FederateAmbassador: " + message );
+        System.out.println( "ProductFederateAmbassador   : " + message );
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -167,7 +167,9 @@ class ProductFederateAmbassador extends NullFederateAmbassador
 
         int percentageOfCustomersDoingSmallShopping;
 
+        builder.append("name: ");
         if(theObject.equals(this.federate.simulationParametersObjectInstanceHandle)) {
+            builder.append("SimulationParameters");
             for (AttributeHandle attribute : theAttributes.keySet()) {
                 try {
                     if (attribute.equals
@@ -175,7 +177,7 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                         byte[] bytes = theAttributes.get(attribute);
                         percentageOfCustomersDoingSmallShopping = Utils.byteToInt(bytes);
                         this.federate.percentageOfCustomersDoingSmallShopping = percentageOfCustomersDoingSmallShopping;
-                        builder.append(" received, percentageOfCustomersDoingSmallShopping = " + percentageOfCustomersDoingSmallShopping);
+                        builder.append(", percentageOfCustomersDoingSmallShopping = " + percentageOfCustomersDoingSmallShopping);
                     }
                 } catch (RTIexception rtIexception) {
                     rtIexception.printStackTrace();
@@ -219,13 +221,24 @@ class ProductFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "product federate - Interaction Received: ");
+        StringBuilder builder = new StringBuilder( "Interaction Received");
+        builder.append( "\ttag=" + new String(tag) );
 
-        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()))
+        if( time != null )
         {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+        builder.append( "\n" );
+
+        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle())) {
             builder.append( " (EnterShop)" );
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
                 builder.append(" received, customerId = " + customerId);
@@ -234,29 +247,9 @@ class ProductFederateAmbassador extends NullFederateAmbassador
             federate.eventList.add(new Event(interactionClass, theParameters, time));
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
+            builder.append(", parameterCount=" + theParameters.size());
+
             this.isRunning = false;
-        }
-
-        builder.append( ", tag=" + new String(tag) );
-
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the parameer information
-        builder.append( ", parameterCount=" + theParameters.size() );
-        builder.append( "\n" );
-        for( ParameterHandle parameter : theParameters.keySet() )
-        {
-            // print the parameter handle
-            builder.append( "\tparamHandle=" );
-            builder.append( parameter );
-            // print the parameter value
-            builder.append( ", paramValue=" );
-            builder.append( theParameters.get(parameter).length );
-            builder.append( " bytes" );
-            builder.append( "\n" );
         }
 
         log( builder.toString() );

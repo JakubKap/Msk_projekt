@@ -11,14 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Statistics {
-    private double avgPayingDuration;
-    private double avgBeingInShopDuration;
-    private double avgBeingInQueueDuration;
-    private double avgBeingInCheckoutDuration;
-    private int avgNumberOfProductsInBasket;
-    private int percentOfPrivilegedCheckouts;
-    private int avgNumberOfClientsInQueue;
-
     private int numOfOrdinaryCheckouts = 0;
     private int numOfPrivilegedCheckouts = 0;
 
@@ -33,15 +25,7 @@ public class Statistics {
 
     List<Integer> clientNumberOfProducts = new LinkedList<>();
 
-    public double getAvgPayingDuration() {
-        return avgPayingDuration;
-    }
-
-    public void setAvgPayingDuration(float avgPayingDuration) {
-        this.avgPayingDuration = avgPayingDuration;
-    }
-
-    public double getAvgBeingInShopDuration() {
+    public double countAvgBeingInShopDuration() {
         double sumOfTimes = 0;
         for(Map.Entry<Integer, LogicalTime> entry: clientsExitShopTimes.entrySet()) {
             double enterTime = ((HLAfloat64Time)clientsEnterShopTimes.get(entry.getKey())).getValue();
@@ -51,11 +35,7 @@ public class Statistics {
         return sumOfTimes / clientsExitShopTimes.size();
     }
 
-    public void setAvgBeingInShopDuration(float avgBeingInShopDuration) {
-        this.avgBeingInShopDuration = avgBeingInShopDuration;
-    }
-
-    public double getAvgBeingInQueueDuration() {
+    public double countAvgBeingInQueueDuration() {
         double sumOfTimes = 0;
         for(Map.Entry<Integer, LogicalTime> entry: clientsEnterCheckoutTimes.entrySet()) {
             double enterQueue = ((HLAfloat64Time)clientsEnterQueueTimes.get(entry.getKey())).getValue();
@@ -65,11 +45,7 @@ public class Statistics {
         return sumOfTimes / clientsEnterCheckoutTimes.size();
     }
 
-    public void setAvgBeingInQueueDuration(float avgBeingInQueueDuration) {
-        this.avgBeingInQueueDuration = avgBeingInQueueDuration;
-    }
-
-    public double getAvgBeingInCheckoutDuration() {
+    public double countAvgBeingInCheckoutDuration() {
         double sumOfTimes = 0;
         for(Map.Entry<Integer, LogicalTime> entry: clientsPayTimes.entrySet()) {
             double enterQueue = ((HLAfloat64Time)clientsEnterCheckoutTimes.get(entry.getKey())).getValue();
@@ -79,7 +55,7 @@ public class Statistics {
         return sumOfTimes / clientsPayTimes.size();
     }
 
-    public double getAvgBeingInOrdinaryCheckoutDuration() {
+    public double countAvgBeingInOrdinaryCheckoutDuration() {
         double sumOfTimes = 0;
         Map<Integer, LogicalTime> clientsInOrdinaryCheckoutPayTimes = clientsPayTimes
                 .keySet()
@@ -95,7 +71,7 @@ public class Statistics {
         return sumOfTimes / clientsInOrdinaryCheckoutPayTimes.size();
     }
 
-    public double getAvgBeingInPrivilegedCheckoutDuration() {
+    public double countAvgBeingInPrivilegedCheckoutDuration() {
         double sumOfTimes = 0;
         Map<Integer, LogicalTime> clientsInPrivilegedCheckoutPayTimes = clientsPayTimes
                 .keySet()
@@ -111,29 +87,13 @@ public class Statistics {
         return sumOfTimes / clientsInPrivilegedCheckoutPayTimes.size();
     }
 
-    public double getAvgNumberOfProductsInBasket(){
+    public double countAvgNumberOfProductsInBasket(){
         double sumOfProductsCount=0;
 
         for(Integer productCount : clientNumberOfProducts)
             sumOfProductsCount += productCount;
 
         return sumOfProductsCount/(clientNumberOfProducts.size());
-    }
-
-    public void setAvgBeingInCheckoutDuration(float avgBeingInCheckoutDuration) {
-        this.avgBeingInCheckoutDuration = avgBeingInCheckoutDuration;
-    }
-
-    public void setAvgNumberOfProductsInBasket(int avgNumberOfProductsInBasket) {
-        this.avgNumberOfProductsInBasket = avgNumberOfProductsInBasket;
-    }
-
-    public int getAvgNumberOfClientsInQueue() {
-        return avgNumberOfClientsInQueue;
-    }
-
-    public void setAvgNumberOfClientsInQueue(int avgNumberOfClientsInQueue) {
-        this.avgNumberOfClientsInQueue = avgNumberOfClientsInQueue;
     }
 
     public void incNumOfOrdinaryCheckouts(){
@@ -146,5 +106,9 @@ public class Statistics {
 
     public double getPercentageOfPrivilegedCheckouts(){
         return (double)(100*numOfPrivilegedCheckouts)/(numOfOrdinaryCheckouts + numOfPrivilegedCheckouts);
+    }
+
+    public int getFinalNumberOfCheckouts() {
+        return numOfOrdinaryCheckouts + numOfPrivilegedCheckouts;
     }
 }

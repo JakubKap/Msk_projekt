@@ -26,19 +26,10 @@ import hla.rti1516e.ParameterHandle;
 import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
-import hla.rti1516e.encoding.DecoderException;
-import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
-import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
-import utils.Event;
 import utils.Utils;
 
-/**
- * This class handles all incoming callbacks from the RTI regarding a particular
- * {@link Customer}. It will log information about any callbacks it
- * receives, thus demonstrating how to deal with the provided callback information.
- */
 class StatisticsFederateAmbassador extends NullFederateAmbassador
 {
     //----------------------------------------------------------
@@ -76,7 +67,7 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     private void log( String message )
     {
-        System.out.println( "FederateAmbassador: " + message );
+        System.out.println( "StatisticsFederateAmbassador   : " + message );
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -178,24 +169,6 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
                                         SupplementalReflectInfo reflectInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Reflection for object:" );
-
-        // print the handle
-        builder.append( " handle=" + theObject );
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the attribute information
-        builder.append( ", attributeCount=" + theAttributes.size() );
-        builder.append( "\n" );
-
-        log( builder.toString() );
     }
 
     @Override
@@ -231,23 +204,38 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "Interaction ");
-
-        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()) )
+        StringBuilder builder = new StringBuilder( "Interaction Received");
+        builder.append( "\ttag=" + new String(tag) );
+        if( time != null )
         {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+        builder.append( "\n" );
+
+        if( interactionClass.equals(federate.enterShopHandleWrapper.getHandle()) ) {
             builder.append( " (EnterShop)" );
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             int customerId = 0;
-            for(ParameterHandle parameter : theParameters.keySet()){
+            for(ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
-                builder.append(" received, customerId = " + customerId);
+                builder.append(", customerId = " + customerId);
             }
 
             federate.statistics.clientsEnterShopTimes.put(customerId, time);
         } else if (interactionClass.equals(federate.exitShopHandleWrapper.getHandle())) {
             builder.append( " (ExitShop)" );
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             int customerId = 0;
-            for(ParameterHandle parameter : theParameters.keySet()){
+            for(ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
                 builder.append(" received, customerId = " + customerId);
@@ -256,9 +244,14 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             federate.statistics.clientsExitShopTimes.put(customerId, time);
         } else if (interactionClass.equals(federate.enterCheckoutHandleWrapper.getHandle())) {
             builder.append( " (EnterCheckout)" );
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             int customerId = 0;
             boolean isPrivileged = false;
-            for(ParameterHandle parameter : theParameters.keySet()){
+            for(ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandleEnterCheckout)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -278,9 +271,14 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             }
         } else if (interactionClass.equals(federate.enterQueueHandleWrapper.getHandle())) {
             builder.append( " (EnterQueue)" );
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             int customerId = 0;
             int numOfProductsInBasket = 0;
-            for(ParameterHandle parameter : theParameters.keySet()){
+            for(ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandleEnterQueue)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -295,11 +293,15 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
 
             federate.statistics.clientsEnterQueueTimes.put(customerId, time);
             federate.statistics.clientNumberOfProducts.add(numOfProductsInBasket);
-        }
-        else if(interactionClass.equals(federate.payHandleWrapper.getHandle())){
+        } else if(interactionClass.equals(federate.payHandleWrapper.getHandle())) {
             builder.append( " (Pay)" );
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             int customerId = 0;
-            for(ParameterHandle parameter : theParameters.keySet()){
+            for(ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandlePay)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -310,48 +312,33 @@ class StatisticsFederateAmbassador extends NullFederateAmbassador
             federate.statistics.clientsPayTimes.put(customerId, time);
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             this.isRunning = false;
-        }  else if(interactionClass.equals(federate.createCheckoutHandleWrapper.getHandle())){
+        } else if(interactionClass.equals(federate.createCheckoutHandleWrapper.getHandle())) {
             builder.append( " (CreateCheckout)" );
+            builder.append( ", parameterCount=" + theParameters.size() );
+
             boolean isPrivileged = false;
-            for(ParameterHandle parameter : theParameters.keySet()){
+            int checkoutId = 0;
+            for(ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.isPrivilegedParameterHandleCreateCheckout)) {
                     byte[] bytes = theParameters.get(parameter);
                     isPrivileged = Utils.byteToBoolean(bytes);
                     builder.append(", isPrivileged = " + isPrivileged);
+                } else if (parameter.equals(federate.checkoutIdParameterHandleCreateCheckout)) {
+                    byte[] bytes = theParameters.get(parameter);
+                    checkoutId = Utils.byteToInt(bytes);
+                    builder.append(", checkoutId = " + checkoutId);
                 }
             }
             if(isPrivileged)
                 federate.statistics.incNumOfPrivilegedCheckouts();
             else
                 federate.statistics.incNumOfOrdinaryCheckouts();
-        }
-
-
-        // print the handle
-
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the parameer information
-        builder.append( ", parameterCount=" + theParameters.size() );
-        builder.append( "\n" );
-        for( ParameterHandle parameter : theParameters.keySet() )
-        {
-            // print the parameter handle
-            builder.append( "\tparamHandle=" );
-            builder.append( parameter );
-            // print the parameter value
-            builder.append( ", paramValue=" );
-            builder.append( theParameters.get(parameter).length );
-            builder.append( " bytes" );
-            builder.append( "\n" );
         }
 
         log( builder.toString() );

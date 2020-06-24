@@ -47,35 +47,17 @@ public class ManagerFederate extends Application {
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
-    protected RtiObjectClassHandleWrapper statisticsHandleWrapper;
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiInteractionClassHandleWrapper startSimulationHandleWrapper;
     protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
-    protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
-    protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
-    protected RtiInteractionClassHandleWrapper enterCheckoutHandleWrapper;
-    protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
-    protected RtiInteractionClassHandleWrapper servicingCustomerHandleWrapper;
-    protected RtiInteractionClassHandleWrapper payHandleWrapper;
-    protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
-
 
     private boolean simulationStarted = false;
     private boolean simulationStopped = false;
-    private boolean startSimulationInteractionSent = false;
 
     private SimulationParameters simulationParameters;
 
-    public SimulationParameters getSimulationParameters() {
-        return simulationParameters;
-    }
-
     public void setSimulationParameters(SimulationParameters simulationParameters) {
         this.simulationParameters = simulationParameters;
-    }
-
-    public boolean isSimulationStarted() {
-        return simulationStarted;
     }
 
     public void setSimulationStarted(boolean simulationStarted) {
@@ -111,10 +93,8 @@ public class ManagerFederate extends Application {
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-//        ObjectInstanceHandle objectHandle = registerObject();
 
         while (fedamb.isRunning) {
-//            updateAttributeValues(objectHandle);
             if (simulationStarted) {
                 startSimulation();
                 ObjectInstanceHandle simulationParametersInstanceHandler = registerObject();
@@ -142,7 +122,6 @@ public class ManagerFederate extends Application {
         simulationParametersWrapper.addAttributes("maxQueueSize", "percentageOfCustomersDoingSmallShopping", "initialNumberOfCheckouts");
         simulationParametersWrapper.publish();
 
-
         this.startSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StartSimulation");
         this.startSimulationHandleWrapper.publish();
 
@@ -152,7 +131,7 @@ public class ManagerFederate extends Application {
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
         ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(simulationParametersWrapper.getHandle());
-        log("Registered Object, handle=" + objectInstanceHandle);
+        log("Registered Object SimulationParameters, handle=" + objectInstanceHandle);
         return objectInstanceHandle;
     }
 

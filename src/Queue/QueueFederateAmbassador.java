@@ -63,7 +63,7 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
     //                    INSTANCE METHODS
     //----------------------------------------------------------
     private void log(String message) {
-        System.out.println("FederateAmbassador: " + message);
+        System.out.println("QueueFederateAmbassador   : " + message);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -178,7 +178,9 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
         int maxQueueSize;
         int initialNumberOfCheckouts;
 
+        builder.append("name: ");
         if (theObject.equals(this.federate.simulationParametersObjectInstanceHandle)) {
+            builder.append("SimulationParameters");
             for (AttributeHandle attribute : theAttributes.keySet()) {
                 try {
                     if (attribute.equals
@@ -199,6 +201,7 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
                 }
             }
         } else {
+            builder.append("Checkout");
             Integer checkoutId = null;
             boolean isFree = false;
             boolean isPriviliged = false;
@@ -209,17 +212,17 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
                             (this.federate.checkoutHandleWrapper.getAttribute("id"))) {
                         byte[] bytes = theAttributes.get(attribute);
                         checkoutId = Utils.byteToInt(bytes);
-                        builder.append(" received, checkoutId = " + checkoutId);
+                        builder.append(", checkoutId = " + checkoutId);
                     } else if (attribute.equals
                             (this.federate.checkoutHandleWrapper.getAttribute("isFree"))) {
                         byte[] bytes = theAttributes.get(attribute);
                         isFree = Utils.byteToBoolean(bytes);
-                        builder.append(" received, isFree = " + isFree);
+                        builder.append(", isFree = " + isFree);
                     } else if (attribute.equals
                             (this.federate.checkoutHandleWrapper.getAttribute("isPrivileged"))) {
                         byte[] bytes = theAttributes.get(attribute);
                         isPriviliged = Utils.byteToBoolean(bytes);
-                        builder.append(" received, isPriviliged = " + isPriviliged);
+                        builder.append(", isPriviliged = " + isPriviliged);
                     }
                 } catch (RTIexception rtIexception) {
                     rtIexception.printStackTrace();
@@ -229,16 +232,13 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
             Integer searchedCheckoutId = checkoutId;
 
             if (searchedCheckoutId != null) {
-
                 Optional<Checkout> optionalCheckout = this.federate.checkouts.stream()
                         .filter(checkout -> checkout.getId() == searchedCheckoutId)
                         .findFirst();
                 if (optionalCheckout.isPresent()) {
                     optionalCheckout.get().setFree(isFree);
-                    builder.append(" StateChange");
                 } else {
                     this.federate.checkouts.add(new Checkout(checkoutId, isPriviliged, isFree));
-                    builder.append(" CREATE");
                 }
             }
         }
@@ -277,13 +277,23 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo)
             throws FederateInternalError {
-        StringBuilder builder = new StringBuilder("Interaction Received:");
+        StringBuilder builder = new StringBuilder("Interaction Received");
+        builder.append("\ttag=" + new String(tag));
+        if (time != null) {
+            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
+        }
+        builder.append( "\n" );
 
         if (interactionClass.equals(federate.enterQueueHandleWrapper.getHandle())) {
             builder.append(" (EnterQueue)");
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             int numberOfProductsInBasket = 0;
             for (ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandleEnterQueue)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -297,31 +307,9 @@ class QueueFederateAmbassador extends NullFederateAmbassador {
             this.federate.events.add(new Event(interactionClass, theParameters, time));
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
+            builder.append(", parameterCount=" + theParameters.size());
+
             this.isRunning = false;
-        }
-
-        // print the handle
-
-        // print the tag
-        builder.append(", tag=" + new String(tag));
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if (time != null) {
-            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
-        }
-
-        // print the parameer information
-        builder.append(", parameterCount=" + theParameters.size());
-        builder.append("\n");
-        for (ParameterHandle parameter : theParameters.keySet()) {
-            // print the parameter handle
-            builder.append("\tparamHandle=");
-            builder.append(parameter);
-            // print the parameter value
-            builder.append(", paramValue=");
-            builder.append(theParameters.get(parameter).length);
-            builder.append(" bytes");
-            builder.append("\n");
         }
 
         log(builder.toString());

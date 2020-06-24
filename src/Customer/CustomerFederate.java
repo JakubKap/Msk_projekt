@@ -49,8 +49,6 @@ public class CustomerFederate
 
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiObjectClassHandleWrapper customerHandleWrapper;
-    protected RtiObjectClassHandleWrapper queueHandleWrapper;
-    protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper startSimulationHandleWrapper;
@@ -74,11 +72,6 @@ public class CustomerFederate
     protected ParameterHandle priceParameterHandlePay;
     private boolean simulationStarted;
 
-
-    public void setSimulationStarted(boolean simulationStarted) {
-        this.simulationStarted = simulationStarted;
-    }
-
     //----------------------------------------------------------
     //                    INSTANCE METHODS
     //----------------------------------------------------------
@@ -86,13 +79,8 @@ public class CustomerFederate
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-    /**
-     * This is the main simulation loop. It can be thought of as the main method of
-     * the federate. For a description of the basic flow of this federate, see the
-     * class level comments
-     */
-    public void runFederate( String federateName ) throws Exception
-    {
+
+    public void runFederate( String federateName ) throws Exception {
         if (createRTIAndFederation(new CustomerFederateAmbassador( this ), federateName, "customer", "Federation")) return;
         this.timeFactory = (HLAfloat64TimeFactory)rtiamb.getTimeFactory();
         rtiamb.registerFederationSynchronizationPoint( READY_TO_RUN, null );
@@ -108,11 +96,7 @@ public class CustomerFederate
             if (simulationStarted) {
                 if(random.nextInt(3) == 0){
                     Customer customer = createCustomer();
-
-                    //            updateAttributeValues( objectHandle );
-
                     enterShop(customer.getId());
-//
                 }
 
                 updateCustomersWithBoughtProducts();
@@ -125,13 +109,12 @@ public class CustomerFederate
                 if (event != null && event.getInteractionClassHandle().equals(this.servicingCustomerHandleWrapper.getHandle())) {
                     int customerId = 0;
                     int checkoutId = 0;
-                    int valueOfProducts = 0;
                     ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
                     for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
                         if (parameter.equals(this.customerIdParameterHandleServicingCustomer)) {
                             byte[] bytes = parameterHandleValueMap.get(parameter);
                             customerId = Utils.byteToInt(bytes);
-                        } else {
+                        } else if (parameter.equals(this.checkoutIdParameterHandleServicingCustomer)) {
                             byte[] bytes = parameterHandleValueMap.get(parameter);
                             checkoutId = Utils.byteToInt(bytes);
                         }
@@ -146,36 +129,6 @@ public class CustomerFederate
         deleteObject();
         resignFederation();
         destroyFederation();
-    }
-
-    private void updateCustomersWithBoughtProducts() throws RTIexception {
-        Event event = null;
-        if (!doingShoppingCustomers.isEmpty()) {
-            event = doingShoppingCustomers.peek();
-        }
-
-        if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
-            int customerId = 0;
-            int numberOfProductsInBasket = 0;
-            int valueOfProducts = 0;
-            ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-            for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                if (parameter.equals(this.customerIdParameterHandleEndShopping)) {
-                    byte[] bytes = parameterHandleValueMap.get(parameter);
-                    customerId = Utils.byteToInt(bytes);
-                } else if (parameter.equals(this.numberOfProductsInBasketParameterHandleEndShopping)){
-                    byte[] bytes = parameterHandleValueMap.get(parameter);
-                    numberOfProductsInBasket = Utils.byteToInt(bytes);
-                } else {
-                    byte[] bytes = parameterHandleValueMap.get(parameter);
-                    valueOfProducts = Utils.byteToInt(bytes);
-                }
-            }
-            Customer customer = customers.get(customerId);
-            updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
-            enterQueue(customerId, customer.getNumberOfProductsInBasket());
-            doingShoppingCustomers.poll();
-        }
     }
 
     private void publishAndSubscribe() throws RTIexception {
@@ -225,22 +178,13 @@ public class CustomerFederate
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
         ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(customerHandleWrapper.getHandle());
-//        log( "Registered Object, handle=" + objectInstanceHandle );
+        log( "Registered Object Customer, handle=" + objectInstanceHandle );
         return objectInstanceHandle;
-    }
-
-    private Customer createCustomer() throws RTIexception {
-        Customer customer = new Customer();
-        customers.add(customer);
-        ObjectInstanceHandle customerInstanceHandler = registerObject();
-        customer.setHandler(customerInstanceHandler);
-        return customer;
     }
 
     private void updateAttributeValues( Customer customer, int numberOfProductsInBasket, int valueOfProducts) throws RTIexception {
         AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-//        int randomValue = 101 + new Random().nextInt(3);
         byte[] numberOfProductsInBasketArray = Utils.intToByte(encoderFactory, numberOfProductsInBasket);
         byte[] valueOfProductsArray = Utils.intToByte(encoderFactory, valueOfProducts);
 
@@ -264,6 +208,44 @@ public class CustomerFederate
         }
     }
 
+    private Customer createCustomer() throws RTIexception {
+        Customer customer = new Customer();
+        customers.add(customer);
+        ObjectInstanceHandle customerInstanceHandler = registerObject();
+        customer.setHandler(customerInstanceHandler);
+        return customer;
+    }
+
+    private void updateCustomersWithBoughtProducts() throws RTIexception {
+        Event event = null;
+        if (!doingShoppingCustomers.isEmpty()) {
+            event = doingShoppingCustomers.peek();
+        }
+
+        if (event != null && event.getInteractionClassHandle().equals(this.endShoppingHandleWrapper.getHandle())) {
+            int customerId = 0;
+            int numberOfProductsInBasket = 0;
+            int valueOfProducts = 0;
+            ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+            for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                if (parameter.equals(this.customerIdParameterHandleEndShopping)) {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    customerId = Utils.byteToInt(bytes);
+                } else if (parameter.equals(this.numberOfProductsInBasketParameterHandleEndShopping)){
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    numberOfProductsInBasket = Utils.byteToInt(bytes);
+                } else {
+                    byte[] bytes = parameterHandleValueMap.get(parameter);
+                    valueOfProducts = Utils.byteToInt(bytes);
+                }
+            }
+            Customer customer = customers.get(customerId);
+            updateAttributeValues(customer, numberOfProductsInBasket, valueOfProducts);
+            enterQueue(customerId, customer.getNumberOfProductsInBasket());
+            doingShoppingCustomers.poll();
+        }
+    }
+
     private void enterShop(int customerId) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterShopHandleWrapper.getHandle(), "customerId");
@@ -272,7 +254,7 @@ public class CustomerFederate
 
         rtiamb.sendInteraction( enterShopHandleWrapper.getHandle(), parameters, generateTag(), time );
 
-        log("(EnterShop) sent, customerId: "+ customerId + " time: "+ fedamb.federateTime);
+        log("(EnterShop) sent, customerId: "+ customerId + ", time: "+ fedamb.federateTime);
     }
 
     private void enterQueue(int customerId, int numberOfProductsInBasket) throws RTIexception {
@@ -285,7 +267,7 @@ public class CustomerFederate
         HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         rtiamb.sendInteraction( enterQueueHandleWrapper.getHandle(), parameters, generateTag(), time );
-        log("(EnterQueue) sent, customerId: " + customerId + "numberOfProductsInBasket: " + numberOfProductsInBasket
+        log("(EnterQueue) sent, customerId: " + customerId + ", numberOfProductsInBasket: " + numberOfProductsInBasket
                 +  ", time: "+ fedamb.federateTime);
     }
 
@@ -302,6 +284,10 @@ public class CustomerFederate
 
         rtiamb.sendInteraction( payHandleWrapper.getHandle(), parameters, generateTag(), time );
         log("(Pay) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + ", price: " + valueOfProducts +  " time: "+ fedamb.federateTime);
+    }
+
+    public void setSimulationStarted(boolean simulationStarted) {
+        this.simulationStarted = simulationStarted;
     }
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Helper Methods //////////////////////////////
@@ -364,7 +350,7 @@ public class CustomerFederate
      */
     private void log( String message )
     {
-        System.out.println("CustomerFederate   : " + message );
+        System.out.println(FEDERATE_NAME_TO_LOGGING + "   : " + message );
     }
 
     /**

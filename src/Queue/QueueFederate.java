@@ -49,23 +49,21 @@ public class QueueFederate {
     protected EncoderFactory encoderFactory;     // set when we join
 
     protected ObjectInstanceHandle simulationParametersObjectInstanceHandle;
-    protected RtiObjectClassHandleWrapper customerHandleWrapper;
     protected RtiObjectClassHandleWrapper queueHandleWrapper;
     protected RtiObjectClassHandleWrapper checkoutHandleWrapper;
+    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiInteractionClassHandleWrapper enterQueueHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterCheckoutHandleWrapper;
     protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
+    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
     public int numberOfQueues;
     public int maxQueueSize;
     public List<Queue> queues;
     public PriorityQueue<Event> events = new PriorityQueue<>();
     public LinkedList<Checkout> checkouts = new LinkedList<>();
-    private Random random = new Random();
-    protected RtiObjectClassHandleWrapper simulationParametersWrapper;
+    private final Random random = new Random();
     protected ParameterHandle customerIdParameterHandleEnterQueue;
     protected ParameterHandle numberOfProductsParameterHandleEnterQueue;
-
-    protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
     private Checkout getCheckoutById(int id) {
         Optional<Checkout> optionalCheckout =  checkouts.stream()
@@ -121,11 +119,6 @@ public class QueueFederate {
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * This is the main simulation loop. It can be thought of as the main method of
-     * the federate. For a description of the basic flow of this federate, see the
-     * class level comments
-     */
     public void runFederate(String federateName) throws Exception, RTIexception {
 
         log("Creating RTIambassador");
@@ -201,14 +194,14 @@ public class QueueFederate {
                         getCheckoutById(queue.getCheckoutId()).setFree(false);
                         sendInteractionEnterCheckout(customerId, queue.getCheckoutId(), queue.isPrivileged());
                         queue.getCustomerListIds().removeFirst();
-                        log("kolejka numer: " + queue.getId() + " isPrivileged: " + queue.isPrivileged() + " list: " + queue.getCustomerListIds());
+                        log("Customer " + customerId + " was headed to checkout " + queue.getCheckoutId() +
+                                " isPrivileged: " + queue.isPrivileged() + " queueState: " + queue.getCustomerListIds());
                     }
                 }
 
                 if (!events.isEmpty()) {
                     Event event = events.peek();
                     handleEnterQueueEvent(event);
-
                 }
             }
             advanceTime(1.0);
@@ -244,13 +237,12 @@ public class QueueFederate {
                     queue = createQueue(true);
                     queues.add(queue);
                     sendInteractionCreateCheckout(queue.getId(), true);
-                    log("utworzono nową kase uprzywilejowana");
                 } else {
                     int index = random.nextInt(freePriorityQueues.size());
                     queue = freePriorityQueues.get(index);
                     queue.getCustomerListIds().add(customer.getId());
                     events.poll();
-                    log("kolejka numer: " + queue.getId() + " , kolejka uprzywilejowana, " + queue.getCustomerListIds() );
+                    log("QueueId: " + queue.getId() + " (Privileged), added new customer, queueState: " + queue.getCustomerListIds() );
                 }
             } else {
                 Queue queue;
@@ -258,19 +250,14 @@ public class QueueFederate {
                     queue = createQueue(false);
                     queues.add(queue);
                     sendInteractionCreateCheckout(queue.getId(), false);
-                    log("utworzono nową kase zwykla");
                 } else {
                     int index = random.nextInt(freeQueues.size());
                     queue = freeQueues.get(index);
                     queue.getCustomerListIds().add(customer.getId());
                     events.poll();
-                    log("kolejka numer: " + queue.getId() + " , kolejka zwykła " + queue.getCustomerListIds() );
+                    log("QueueId: " + queue.getId() + " (Ordinary), added new customer, queueState: " + queue.getCustomerListIds() );
                 }
             }
-
-//            updateAttributeValues(queue, customer.getId());
-//            enterCheckout(event, enteredQueue.getCheckoutId());
-
         }
     }
 
@@ -297,12 +284,11 @@ public class QueueFederate {
             Queue queue = createQueue(isPrivileged);
             sendInteractionCreateCheckout(queue.getId(), isPrivileged);
             queues.add(queue);
-            log("utworzono kolejkę: " + queue.getId() + " , isPrivileged: " + isPrivileged);
         }
     }
 
     private Queue createQueue(boolean isPrivileged) throws RTIexception {
-        Queue queue = new Queue(maxQueueSize, isPrivileged);
+        Queue queue = new Queue(isPrivileged);
         ObjectInstanceHandle customerInstanceHandler = registerObject();
         queue.setHandler(customerInstanceHandler);
         return queue;
@@ -359,11 +345,6 @@ public class QueueFederate {
         }
     }
 
-    /**
-     * This method will inform the RTI about the types of data that the federate will
-     * be creating, and the types of data we are interested in hearing about as other
-     * federates produce it.
-     */
     private void publishAndSubscribe() throws RTIexception {
         this.queueHandleWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.Queue");
         this.queueHandleWrapper.addAttributes("id", "maxLimit", "checkoutId");
@@ -393,14 +374,12 @@ public class QueueFederate {
         this.stopSimulationHandleWrapper.subscribe();
     }
 
-    /**
-     * This method will register an instance of the Soda class and will
-     * return the federation-wide unique handle for that instance. Later in the
-     * simulation, we will update the attribute values for this instance
-     */
     private ObjectInstanceHandle registerObject() throws RTIexception {
-        return rtiamb.registerObjectInstance(queueHandleWrapper.getHandle());
+        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(queueHandleWrapper.getHandle());
+        log( "Registered Object Queue, handle=" + objectInstanceHandle );
+        return objectInstanceHandle;
     }
+
     private void sendInteractionEnterCheckout(int customerId, int checkoutId, boolean isPrivileged) throws RTIexception {
         ParameterHandleValueMap parameters = rtiamb.getParameterHandleValueMapFactory().create(3);
         ParameterHandle customerIdHandle = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
@@ -416,11 +395,6 @@ public class QueueFederate {
         log("(EnterCheckout) sent, customerId: " + customerId + ", checkoutId: " + checkoutId + " time: " + fedamb.federateTime);
     }
 
-    /**
-     * This method will request a time advance to the current time, plus the given
-     * timestep. It will then wait until a notification of the time advance grant
-     * has been received.
-     */
     private void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
@@ -432,15 +406,6 @@ public class QueueFederate {
         while (fedamb.isAdvancing) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
-    }
-
-    /**
-     * This method will attempt to delete the object instance of the given
-     * handle. We can only delete objects we created, or for which we own the
-     * privilegeToDelete attribute.
-     */
-    private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
-        rtiamb.deleteObjectInstance(handle, generateTag());
     }
 
     private short getTimeAsShort() {

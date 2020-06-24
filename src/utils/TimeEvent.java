@@ -5,10 +5,11 @@ import hla.rti1516e.LogicalTime;
 import hla.rti1516e.ParameterHandleValueMap;
 
 public class TimeEvent extends Event {
-    private int intervalTime;
+    private final int intervalTime;
     private int currentTime;
 
-    public TimeEvent(InteractionClassHandle interactionClassHandle, ParameterHandleValueMap parameterHandleValueMap, LogicalTime time, int intervalTime) {
+    public TimeEvent(InteractionClassHandle interactionClassHandle, ParameterHandleValueMap parameterHandleValueMap,
+                     LogicalTime time, int intervalTime) {
         super(interactionClassHandle, parameterHandleValueMap, time);
         this.intervalTime = intervalTime;
     }
@@ -19,10 +20,6 @@ public class TimeEvent extends Event {
 
     public void incrementTime() {
         this.currentTime++;
-    }
-
-    public int getIntervalTime() {
-        return intervalTime;
     }
 
     public int getCurrentTime() {

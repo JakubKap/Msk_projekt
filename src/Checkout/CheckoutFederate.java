@@ -25,7 +25,6 @@ import rtiHelperClasses.RtiObjectClassHandleWrapper;
 import utils.Event;
 import utils.TimeEvent;
 import utils.Utils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -66,32 +65,17 @@ public class CheckoutFederate {
     protected ParameterHandle checkoutIdParameterHandlePay;
     protected ParameterHandle priceParameterHandlePay;
 
-
     public int numberOfCheckouts;
     public List<Checkout> checkouts;
     public Collection<TimeEvent> servicingCustomers = new CopyOnWriteArrayList<>();
     public PriorityQueue<Event> customersToExit = new PriorityQueue<>();
     public PriorityQueue<Event> createCheckoutEvents = new PriorityQueue<>();
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
-    private Random random = new Random();
-
-    private Checkout getCheckoutById(int id) {
-        Optional<Checkout> optionalCheckout = checkouts.stream()
-                .filter(checkout -> checkout.getId() == id)
-                .findFirst();
-        return optionalCheckout.orElse(null);
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * This is the main simulation loop. It can be thought of as the main method of
-     * the federate. For a description of the basic flow of this federate, see the
-     * class level comments
-     */
     public void runFederate(String federateName) throws Exception {
         if (
                 createRTIAndFederation(
@@ -138,7 +122,7 @@ public class CheckoutFederate {
                         if (event.getCurrentTime() == 0) {
                             Checkout checkout = getCheckoutById(checkoutId);
                             checkout.setFree(false);
-                            log("Kasa " + checkout.getId() + " jest zajmowana");
+                            log("Checkout " + checkout.getId() + " is occupied");
                             updateAttributeValues(checkout);
                         }
 
@@ -151,70 +135,41 @@ public class CheckoutFederate {
                     }
                 }
 
+                Event event = null;
 
-            Event event = null;
-
-            if (!customersToExit.isEmpty()) {
-                event = customersToExit.peek();
-            }
-
-            if (event != null && event.getInteractionClassHandle().equals(this.payHandle)) {
-                int customerId = 0;
-                int checkoutId = 0;
-                ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-                    if (parameter.equals(this.customerIdParameterHandlePay)) {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        customerId = Utils.byteToInt(bytes);
-                    } else if (parameter.equals(this.checkoutIdParameterHandlePay)) {
-                        byte[] bytes = parameterHandleValueMap.get(parameter);
-                        checkoutId = Utils.byteToInt(bytes);
-                    }
+                if (!customersToExit.isEmpty()) {
+                    event = customersToExit.peek();
                 }
-                Checkout checkout = getCheckoutById(checkoutId);
-                checkout.setFree(true);
-                log("Kasa " + checkout.getId() + " jest zwalniana");
-                updateAttributeValues(checkout);
-                sendInteractionExitShop(customerId);
 
-                customersToExit.poll();
+                if (event != null && event.getInteractionClassHandle().equals(this.payHandle)) {
+                    int customerId = 0;
+                    int checkoutId = 0;
+                    ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+                    for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                        if (parameter.equals(this.customerIdParameterHandlePay)) {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            customerId = Utils.byteToInt(bytes);
+                        } else if (parameter.equals(this.checkoutIdParameterHandlePay)) {
+                            byte[] bytes = parameterHandleValueMap.get(parameter);
+                            checkoutId = Utils.byteToInt(bytes);
+                        }
+                    }
+                    Checkout checkout = getCheckoutById(checkoutId);
+                    checkout.setFree(true);
+                    log("Checkout " + checkout.getId() + " is free");
+                    updateAttributeValues(checkout);
+                    sendInteractionExitShop(customerId);
+
+                    customersToExit.poll();
+                }
+
             }
-
+            advanceTime(1.0);
         }
-        advanceTime(1.0);
-    }
-
 
         deleteObject();
-
         resignFederation();
-
         destroyFederation();
-    }
-
-    private void handleCreateCheckoutEvent(Event event) throws RTIexception {
-        int checkoutId = 0;
-        boolean isPrivileged = false;
-        ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-        for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
-            if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("checkoutId"))) {
-                byte[] bytes = parameterHandleValueMap.get(parameter);
-                checkoutId = Utils.byteToInt(bytes);
-            } else if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("isPrivileged"))) {
-                byte[] bytes = parameterHandleValueMap.get(parameter);
-                isPrivileged = Utils.byteToBoolean(bytes);
-            }
-        }
-        Checkout checkout = createCheckout(checkoutId, isPrivileged);
-        updateAttributeValues(checkout);
-    }
-
-    private Checkout createCheckout(int checkoutId, boolean isPrivileged) throws RTIexception {
-        Checkout checkout = new Checkout(checkoutId, isPrivileged, true);
-        checkouts.add(checkout);
-        ObjectInstanceHandle checkoutInstanceHandler = registerObject();
-        checkout.setHandler(checkoutInstanceHandler);
-        return checkout;
     }
 
     private void publishAndSubscribe() throws RTIexception {
@@ -279,7 +234,7 @@ public class CheckoutFederate {
 
     private ObjectInstanceHandle registerObject() throws RTIexception {
         ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(checkoutHandle);
-        log("Registered Object, handle=" + objectInstanceHandle);
+        log("Registered Object Checkout, handle=" + objectInstanceHandle);
         return objectInstanceHandle;
     }
 
@@ -296,6 +251,13 @@ public class CheckoutFederate {
 
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
         rtiamb.updateAttributeValues(checkout.getHandler(), attributes, generateTag(), time);
+    }
+
+    private void deleteObject() throws RTIexception {
+        for (Checkout checkout : checkouts) {
+            rtiamb.deleteObjectInstance(checkout.getHandler(), generateTag());
+            log("Deleted Object, handle=" + checkout.getHandler());
+        }
     }
 
     private void sendInteractionServicingCustomer(int customerId, int checkoutId) throws RTIexception {
@@ -322,11 +284,36 @@ public class CheckoutFederate {
         log("(ExitShop) sent, customerId: " + customerId + " time: " + fedamb.federateTime);
     }
 
-    private void deleteObject() throws RTIexception {
-        for(Checkout checkout : checkouts) {
-            rtiamb.deleteObjectInstance(checkout.getHandler(), generateTag());
-            log("Deleted Object, handle=" + checkout.getHandler());
+    private void handleCreateCheckoutEvent(Event event) throws RTIexception {
+        int checkoutId = 0;
+        boolean isPrivileged = false;
+        ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
+        for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+            if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("checkoutId"))) {
+                byte[] bytes = parameterHandleValueMap.get(parameter);
+                checkoutId = Utils.byteToInt(bytes);
+            } else if (parameter.equals(this.createCheckoutHandleWrapper.getParameter("isPrivileged"))) {
+                byte[] bytes = parameterHandleValueMap.get(parameter);
+                isPrivileged = Utils.byteToBoolean(bytes);
+            }
         }
+        Checkout checkout = createCheckout(checkoutId, isPrivileged);
+        updateAttributeValues(checkout);
+    }
+
+    private Checkout createCheckout(int checkoutId, boolean isPrivileged) throws RTIexception {
+        Checkout checkout = new Checkout(checkoutId, isPrivileged, true);
+        checkouts.add(checkout);
+        ObjectInstanceHandle checkoutInstanceHandler = registerObject();
+        checkout.setHandler(checkoutInstanceHandler);
+        return checkout;
+    }
+
+    private Checkout getCheckoutById(int id) {
+        Optional<Checkout> optionalCheckout = checkouts.stream()
+                .filter(checkout -> checkout.getId() == id)
+                .findFirst();
+        return optionalCheckout.orElse(null);
     }
 
     ////////////////////////////////////////////////////////////////////////////

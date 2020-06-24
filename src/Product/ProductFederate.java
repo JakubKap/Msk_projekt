@@ -14,11 +14,8 @@
  */
 package Product;
 
-import Customer.Customer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger16BE;
-import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
@@ -27,6 +24,7 @@ import utils.Event;
 import rtiHelperClasses.RtiInteractionClassHandleWrapper;
 import rtiHelperClasses.RtiObjectClassHandleWrapper;
 import utils.Utils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -57,17 +55,14 @@ public class ProductFederate {
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
     protected RtiInteractionClassHandleWrapper endShoppingHandleWrapper;
     protected RtiInteractionClassHandleWrapper enterShopHandleWrapper;
-    protected RtiObjectClassHandleWrapper customerHandleWrapper;
 
     protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
     public PriorityQueue<Event> eventList = new PriorityQueue<>();
 
-    public int customerCounter = 0;
     protected int percentageOfCustomersDoingSmallShopping;
-    protected ParameterHandle percentageOfCustomersDoingSmallShoppingParameterHandle;
 
-    private static Random random = new Random();
+    private static final Random random = new Random();
 
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
@@ -88,7 +83,6 @@ public class ProductFederate {
         evokeMultipleCallbacksIfNotReadyToRun();
         enableTimePolicy();
         publishAndSubscribe();
-//        ObjectInstanceHandle objectHandle = registerObject();
 
         while (fedamb.isRunning) {
 
@@ -100,7 +94,7 @@ public class ProductFederate {
             if (event != null && event.getInteractionClassHandle().equals(this.enterShopHandleWrapper.getHandle())) {
                 int customerId = 0;
                 ParameterHandleValueMap parameterHandleValueMap = event.getParameterHandleValueMap();
-                for(ParameterHandle parameter : parameterHandleValueMap.keySet()) {
+                for (ParameterHandle parameter : parameterHandleValueMap.keySet()) {
                     byte[] bytes = parameterHandleValueMap.get(parameter);
                     customerId = Utils.byteToInt(bytes);
                     endShopping(customerId);
@@ -108,59 +102,28 @@ public class ProductFederate {
                 eventList.poll();
             }
 
-            advanceTime( 1.0 );
-//            advanceTime( random.nextInt(9) + 1 );
+            advanceTime(1.0);
         }
 
-//        deleteObject(objectHandle);
         resignFederation();
         destroyFederation();
     }
 
     private void publishAndSubscribe() throws RTIexception {
+        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
+        this.simulationParametersWrapper.addAttributes("percentageOfCustomersDoingSmallShopping");
+        this.simulationParametersWrapper.subscribe();
+
         this.endShoppingHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EndShopping");
         this.endShoppingHandleWrapper.publish();
 
         this.enterShopHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.EnterShop");
         this.enterShopHandleWrapper.subscribe();
 
-        this.simulationParametersWrapper = new RtiObjectClassHandleWrapper(rtiamb, "HLAobjectRoot.SimulationParameters");
-        simulationParametersWrapper.addAttributes("percentageOfCustomersDoingSmallShopping");
-        simulationParametersWrapper.subscribe();
-
         this.stopSimulationHandleWrapper = new RtiInteractionClassHandleWrapper(this.rtiamb, "HLAinteractionRoot.StopSimulation");
         this.stopSimulationHandleWrapper.subscribe();
 
         log("Published and Subscribed");
-    }
-
-    private ObjectInstanceHandle registerObject() throws RTIexception, ClassNotFoundException {
-        ObjectInstanceHandle objectInstanceHandle = rtiamb.registerObjectInstance(customerHandleWrapper.getHandle());
-        log("Registered Object, handle=" + objectInstanceHandle);
-        return objectInstanceHandle;
-    }
-
-    private void updateAttributeValues(ObjectInstanceHandle objectHandle) throws RTIexception {
-        AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-
-//        int randomValue = 101 + new Random().nextInt(3);
-        byte[] numberOfProductsInBasket = Utils.intToByte(encoderFactory, 3);
-        byte[] valueOfProducts = Utils.intToByte(encoderFactory, 5);
-
-        attributes.put(customerHandleWrapper.getAttribute("numberOfProductsInBasket"), numberOfProductsInBasket);
-        attributes.put(customerHandleWrapper.getAttribute("valueOfProducts"), valueOfProducts);
-
-
-
-        HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
-        rtiamb.updateAttributeValues(objectHandle, attributes, generateTag(), time);
-
-        log("Zmodyfikowano obiekt klienta " + objectHandle + " " + attributes);
-    }
-
-    private void deleteObject(ObjectInstanceHandle handle) throws RTIexception {
-        rtiamb.deleteObjectInstance(handle, generateTag());
-        log("Deleted Object, handle=" + handle);
     }
 
     protected void endShopping(int customerId) throws RTIexception {
@@ -171,7 +134,7 @@ public class ProductFederate {
 
 
         int numberOfProductsInBasket;
-        if((random.nextDouble() *100) <= percentageOfCustomersDoingSmallShopping)
+        if ((random.nextDouble() * 100) <= percentageOfCustomersDoingSmallShopping)
             numberOfProductsInBasket = random.nextInt(5) + 1;
         else
             numberOfProductsInBasket = random.nextInt(5) + 6;
@@ -185,8 +148,8 @@ public class ProductFederate {
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + fedamb.federateLookahead);
 
         rtiamb.sendInteraction(endShoppingHandleWrapper.getHandle(), parameters, generateTag(), time);
-        log("(EndShopping) sent, customerId: " + customerId +  ", numberOfProductsInBasket: " + numberOfProductsInBasket
-                + ", valueOfProductsHandle: " + valueOfProducts +  ", time: " + fedamb.federateTime);
+        log("(EndShopping) sent, customerId: " + customerId + ", numberOfProductsInBasket: " + numberOfProductsInBasket
+                + ", valueOfProductsHandle: " + valueOfProducts + ", time: " + fedamb.federateTime);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -245,7 +208,7 @@ public class ProductFederate {
      * This is just a helper method to make sure all logging it output in the same form
      */
     private void log(String message) {
-        System.out.println("ProductFederate   : " + message);
+        System.out.println(FEDERATE_NAME_TO_LOGGING + "   : " + message);
     }
 
     /**

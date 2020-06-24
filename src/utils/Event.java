@@ -6,8 +6,8 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.time.HLAfloat64Time;
 
 public class Event implements Comparable<Event> {
-    private InteractionClassHandle interactionClassHandle;
-    private ParameterHandleValueMap parameterHandleValueMap;
+    private final InteractionClassHandle interactionClassHandle;
+    private final ParameterHandleValueMap parameterHandleValueMap;
     private LogicalTime time;
 
     public Event(InteractionClassHandle interactionClassHandle, ParameterHandleValueMap parameterHandleValueMap, LogicalTime time) {
@@ -20,16 +20,8 @@ public class Event implements Comparable<Event> {
         return interactionClassHandle;
     }
 
-    public void setInteractionClassHandle(InteractionClassHandle interactionClassHandle) {
-        this.interactionClassHandle = interactionClassHandle;
-    }
-
     public ParameterHandleValueMap getParameterHandleValueMap() {
         return parameterHandleValueMap;
-    }
-
-    public void setParameterHandleValueMap(ParameterHandleValueMap parameterHandleValueMap) {
-        this.parameterHandleValueMap = parameterHandleValueMap;
     }
 
     @Override

@@ -40,7 +40,6 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     private CheckoutFederate federate;
 
-    // these variables are accessible in the package
     protected double federateTime = 0.0;
     protected double federateLookahead = 1.0;
 
@@ -52,7 +51,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
     protected boolean isReadyToRun = false;
     protected boolean isRunning = true;
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -66,7 +65,7 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
     //                    INSTANCE METHODS
     //----------------------------------------------------------
     private void log(String message) {
-        System.out.println("FederateAmbassador: " + message);
+        System.out.println("CheckoutFederateAmbassador   : " + message);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -178,7 +177,9 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
         builder.append(", attributeCount=" + theAttributes.size());
         builder.append("\n");
 
+        builder.append("name: ");
         if (theObject.equals(this.federate.simulationParametersObjectInstanceHandle)) {
+            builder.append("SimulationParameters");
             for (AttributeHandle attribute : theAttributes.keySet()) {
                 try {
                     if (attribute.equals
@@ -228,13 +229,25 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo)
             throws FederateInternalError {
-        StringBuilder builder = new StringBuilder("Interaction Received:");
+        StringBuilder builder = new StringBuilder("Interaction Received");
+        builder.append("\ttag=" + new String(tag));
+        if (time != null) {
+            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
+        }
+        builder.append( "\n" );
 
         if (interactionClass.equals(federate.enterCheckoutHandle)) {
             builder.append(" (EnterCheckout) received");
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             int checkoutId = 0;
+
             for (ParameterHandle parameter : theParameters.keySet()) {
+
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandleEnterCheckout)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -254,10 +267,10 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
             if (optionalCheckout.isPresent()) {
                 Checkout checkout = optionalCheckout.get();
                 if (checkout.isPrivileged()) {
-                    builder.append("WCHODZIMY DO UPRZYWILEJOWANEJ");
+                    builder.append(", checkoutType: privileged");
                     federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, time, random.nextInt(5) + 5));
                 } else {
-                    builder.append("WCHODZIMY DO ZWYKEJ");
+                    builder.append(", checkoutType: ordinary");
                     federate.servicingCustomers.add(new TimeEvent(interactionClass, theParameters, time,random.nextInt(5) + 20));
                 }
             }
@@ -265,10 +278,15 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
 
         } else if (interactionClass.equals(federate.payHandle)) {
             builder.append(" (Pay) received");
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             int checkoutId = 0;
             int price = 0;
             for (ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandlePay)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -287,9 +305,14 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
             federate.customersToExit.add(new Event(interactionClass, theParameters, time));
         } else if (interactionClass.equals(federate.createCheckoutHandleWrapper.getHandle())) {
             builder.append(" (createCheckout) received");
+            builder.append(", parameterCount=" + theParameters.size());
+
             int checkoutId = 0;
             boolean isPrivileged = false;
             for (ParameterHandle parameter : theParameters.keySet()) {
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.createCheckoutHandleWrapper.getParameter("checkoutId"))) {
                     byte[] bytes = theParameters.get(parameter);
                     checkoutId = Utils.byteToInt(bytes);
@@ -303,31 +326,9 @@ class CheckoutFederateAmbassador extends NullFederateAmbassador {
             federate.createCheckoutEvents.add(new Event(interactionClass, theParameters, time));
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())){
             builder.append(" (StopSimulation) received");
+            builder.append(", parameterCount=" + theParameters.size());
+
             this.isRunning = false;
-        }
-
-        // print the handle
-
-        // print the tag
-        builder.append(", tag=" + new String(tag));
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if (time != null) {
-            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
-        }
-
-        // print the parameer information
-        builder.append(", parameterCount=" + theParameters.size());
-        builder.append("\n");
-        for (ParameterHandle parameter : theParameters.keySet()) {
-            // print the parameter handle
-            builder.append("\tparamHandle=");
-            builder.append(parameter);
-            // print the parameter value
-            builder.append(", paramValue=");
-            builder.append(theParameters.get(parameter).length);
-            builder.append(" bytes");
-            builder.append("\n");
         }
 
         log(builder.toString());

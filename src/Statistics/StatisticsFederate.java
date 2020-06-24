@@ -14,9 +14,7 @@
  */
 package Statistics;
 
-import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.CallbackModel;
-import hla.rti1516e.ObjectInstanceHandle;
 import hla.rti1516e.RTIambassador;
 import hla.rti1516e.ResignAction;
 import hla.rti1516e.RtiFactoryFactory;
@@ -57,27 +55,22 @@ public class StatisticsFederate
     protected RtiInteractionClassHandleWrapper payHandleWrapper;
     protected RtiInteractionClassHandleWrapper exitShopHandleWrapper;
     protected RtiInteractionClassHandleWrapper createCheckoutHandleWrapper;
-
-    public ParameterHandle customerIdParameterHandleEnterCheckout;
-    public ParameterHandle customerIdParameterHandleEnterQueue;
-    public ParameterHandle customerIdParameterHandlePay;
-    protected ParameterHandle numberOfProductsInBasketParameterHandleEnterQueue;
-    protected ParameterHandle isPrivilegedParameterHandleCreateCheckout;
-    protected ParameterHandle isPrivilegedParameterHandleEnterCheckout;
-
     protected RtiInteractionClassHandleWrapper stopSimulationHandleWrapper;
 
-    protected Statistics statistics = new Statistics();
+    protected ParameterHandle customerIdParameterHandleEnterCheckout;
+    protected ParameterHandle customerIdParameterHandleEnterQueue;
+    protected ParameterHandle customerIdParameterHandlePay;
+    protected ParameterHandle numberOfProductsInBasketParameterHandleEnterQueue;
+    protected ParameterHandle isPrivilegedParameterHandleCreateCheckout;
+    protected ParameterHandle checkoutIdParameterHandleCreateCheckout;
+    protected ParameterHandle isPrivilegedParameterHandleEnterCheckout;
 
+    protected Statistics statistics = new Statistics();
 
     ///////////////////////////////////////////////////////////////////////////
     ////////////////////////// Main Simulation Method /////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-    /**
-     * This is the main simulation loop. It can be thought of as the main method of
-     * the federate. For a description of the basic flow of this federate, see the
-     * class level comments
-     */
+
     public void runFederate( String federateName ) throws Exception
     {
         if (
@@ -96,19 +89,18 @@ public class StatisticsFederate
         enableTimePolicy();
         publishAndSubscribe();
 
-        while( fedamb.isRunning )
-        {
-
+        while( fedamb.isRunning ) {
             advanceTime( 1.0 );
         }
 
-        System.out.println("AvgBeingInShopDuration: " + statistics.getAvgBeingInShopDuration());
-        System.out.println("AvgBeingInQueueDuration: " + statistics.getAvgBeingInQueueDuration());
-        System.out.println("AvgBeingInCheckoutDuration: " + statistics.getAvgBeingInCheckoutDuration());
-        System.out.println("AvgBeingInOrdinaryCheckoutDuration: " + statistics.getAvgBeingInOrdinaryCheckoutDuration());
-        System.out.println("AvgBeingInPrivilegedCheckoutDuration: " + statistics.getAvgBeingInPrivilegedCheckoutDuration());
-        System.out.println("avgNumberOfProductsInBasket: " + statistics.getAvgNumberOfProductsInBasket());
-        System.out.println("percentOfPrivilegedCheckouts: " + statistics.getPercentageOfPrivilegedCheckouts());
+        log("NumberOfCheckouts: " + statistics.getFinalNumberOfCheckouts());
+        log("AvgBeingInShopDuration: " + statistics.countAvgBeingInShopDuration());
+        log("AvgBeingInQueueDuration: " + statistics.countAvgBeingInQueueDuration());
+        log("AvgBeingInCheckoutDuration: " + statistics.countAvgBeingInCheckoutDuration());
+        log("AvgBeingInOrdinaryCheckoutDuration: " + statistics.countAvgBeingInOrdinaryCheckoutDuration());
+        log("AvgBeingInPrivilegedCheckoutDuration: " + statistics.countAvgBeingInPrivilegedCheckoutDuration());
+        log("AvgNumberOfProductsInBasket: " + statistics.countAvgNumberOfProductsInBasket());
+        log("PercentOfPrivilegedCheckouts: " + statistics.getPercentageOfPrivilegedCheckouts());
 
         resignFederation();
         destroyFederation();
@@ -146,6 +138,7 @@ public class StatisticsFederate
         createCheckoutHandleWrapper.subscribe();
 
         isPrivilegedParameterHandleCreateCheckout = rtiamb.getParameterHandle(createCheckoutHandleWrapper.getHandle(), "isPrivileged");
+        this.checkoutIdParameterHandleCreateCheckout = rtiamb.getParameterHandle(createCheckoutHandleWrapper.getHandle(), "checkoutId");
 
         customerIdParameterHandleEnterCheckout = rtiamb.getParameterHandle(enterCheckoutHandleWrapper.getHandle(), "customerId");
 

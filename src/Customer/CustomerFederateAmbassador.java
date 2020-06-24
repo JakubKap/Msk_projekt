@@ -63,7 +63,7 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
     //----------------------------------------------------------
     private void log( String message )
     {
-        System.out.println( "FederateAmbassador: " + message );
+        System.out.println( "CustomerFederateAmbassador   : " + message );
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -185,7 +185,9 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
         builder.append( ", attributeCount=" + theAttributes.size() );
         builder.append( "\n" );
 
+        builder.append("name: ");
         if (theObject.equals(federate.simulationParametersObjectInstanceHandle)) {
+            builder.append("SimulationParameters");
             for (AttributeHandle attribute : theAttributes.keySet()) {
                 int maxQueueSize = 0;
                 int percentageOfCustomersDoingSmallShopping = 0;
@@ -246,22 +248,35 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                                     SupplementalReceiveInfo receiveInfo )
             throws FederateInternalError
     {
-        StringBuilder builder = new StringBuilder( "customer federate - Interaction Received:" );
+        StringBuilder builder = new StringBuilder( "Interaction Received" );
+
+        builder.append( "\ttag=");
+        builder.append( new String(tag));
+        if( time != null ) {
+            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
+        }
+        builder.append( "\n" );
 
         if( interactionClass.equals(federate.startSimulationHandleWrapper.getHandle())) {
             builder.append(" (StartSimulation) received");
+            builder.append( ", parameterCount=0" );
             federate.setSimulationStarted(true);
         } else if(interactionClass.equals(federate.stopSimulationHandleWrapper.getHandle())) {
             builder.append(" (StopSimulation) received");
+            builder.append( ", parameterCount=0" );
             this.isRunning = false;
-        }
-        else if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle()))
-        {
+        } else if( interactionClass.equals(federate.endShoppingHandleWrapper.getHandle())) {
             builder.append( " (EndShopping) received" );
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             int numberOfProductsInBasket = 0;
             int valueOfProducts = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
+
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandleEndShopping)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -276,13 +291,19 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                     builder.append(", valueOfProducts = " + valueOfProducts);
                 }
             }
-
             federate.doingShoppingCustomers.add(new Event(interactionClass, theParameters, time));
         } else if( interactionClass.equals(federate.servicingCustomerHandleWrapper.getHandle())) {
             builder.append( " (ServivingCustomer) received" );
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             int checkoutId = 0;
+
             for(ParameterHandle parameter : theParameters.keySet()){
+
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 if (parameter.equals(federate.customerIdParameterHandleServicingCustomer)) {
                     byte[] bytes = theParameters.get(parameter);
                     customerId = Utils.byteToInt(bytes);
@@ -293,42 +314,21 @@ class CustomerFederateAmbassador extends NullFederateAmbassador
                     builder.append(", checkoutId = " + checkoutId);
                 }
             }
-
             federate.servicingCustomers.add(new Event(interactionClass, theParameters, time));
         } else if( interactionClass.equals(federate.exitShopHandleWrapper.getHandle())) {
             builder.append( " (ExitShop) received" );
+            builder.append(", parameterCount=" + theParameters.size());
+
             int customerId = 0;
             for(ParameterHandle parameter : theParameters.keySet()){
+
+                builder.append( "\tparamHandle=" );
+                builder.append( parameter );
+
                 byte[] bytes = theParameters.get(parameter);
                 customerId = Utils.byteToInt(bytes);
                 builder.append(", customerId = " + customerId);
             }
-        }
-
-        // print the handle
-
-        // print the tag
-        builder.append( ", tag=" + new String(tag) );
-        // print the time (if we have it) we'll get null if we are just receiving
-        // a forwarded call from the other reflect callback above
-        if( time != null )
-        {
-            builder.append( ", time=" + ((HLAfloat64Time)time).getValue() );
-        }
-
-        // print the parameer information
-        builder.append( ", parameterCount=" + theParameters.size() );
-        builder.append( "\n" );
-        for( ParameterHandle parameter : theParameters.keySet() )
-        {
-            // print the parameter handle
-            builder.append( "\tparamHandle=" );
-            builder.append( parameter );
-            // print the parameter value
-            builder.append( ", paramValue=" );
-            builder.append( theParameters.get(parameter).length );
-            builder.append( " bytes" );
-            builder.append( "\n" );
         }
 
         log( builder.toString() );

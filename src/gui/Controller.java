@@ -30,7 +30,7 @@ public class Controller {
             this.gridPane.add(textFields[i], 1, i, 1, 1);
         }
 
-        disableStartStopSimulationBtns(true);
+        disableStartStopSimulationBtns();
 
         new Manager().start();
 
@@ -44,19 +44,17 @@ public class Controller {
     class Manager extends Thread {
         public void run() {
             try {
-                // run the example federate
                 managerFederate = new ManagerFederate();
                 managerFederate.runFederate("Manager");
             } catch (Exception rtie) {
-                // an exception occurred, just log the information and exit
                 rtie.printStackTrace();
             }
         }
     }
 
-    private void disableStartStopSimulationBtns(boolean value){
-        startSimulationBtn.setDisable(value);
-        stopSimulationBtn.setDisable(value);
+    private void disableStartStopSimulationBtns(){
+        startSimulationBtn.setDisable(true);
+        stopSimulationBtn.setDisable(true);
     }
 
     private boolean areAllParametersSet(NumberTextField currentTextField){
@@ -91,7 +89,7 @@ public class Controller {
 
     @FXML
     private void stopSimulation(ActionEvent event) {
-        disableStartStopSimulationBtns(true);
+        disableStartStopSimulationBtns();
         clearTextFields();
 
         managerFederate.setSimulationStopped(true);

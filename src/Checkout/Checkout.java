@@ -3,8 +3,8 @@ package Checkout;
 import hla.rti1516e.ObjectInstanceHandle;
 
 public class Checkout {
-    private int id;
-    private boolean isPrivileged;
+    private final int id;
+    private final boolean isPrivileged;
     private boolean isFree;
     private ObjectInstanceHandle handler;
 
@@ -18,16 +18,8 @@ public class Checkout {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public boolean isPrivileged() {
         return isPrivileged;
-    }
-
-    public void setPrivileged(boolean privileged) {
-        isPrivileged = privileged;
     }
 
     public boolean isFree() {
