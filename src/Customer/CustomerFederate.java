@@ -14,6 +14,7 @@
  */
 package Customer;
 
+import generators.SimGenerator;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.exceptions.*;
@@ -45,6 +46,9 @@ public class CustomerFederate
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
+    private SimGenerator simGenerator = new SimGenerator();
+    private int counter = 0;
+
     protected ObjectInstanceHandle simulationParametersObjectInstanceHandle;
 
     protected RtiObjectClassHandleWrapper simulationParametersWrapper;
@@ -71,6 +75,7 @@ public class CustomerFederate
     protected ParameterHandle checkoutIdParameterHandlePay;
     protected ParameterHandle priceParameterHandlePay;
     private boolean simulationStarted;
+    private double generatedTime;
 
     //----------------------------------------------------------
     //                    INSTANCE METHODS
@@ -94,7 +99,10 @@ public class CustomerFederate
         while( fedamb.isRunning)
         {
             if (simulationStarted) {
-                if(random.nextInt(3) == 0){
+                counter++;
+                if (this.counter >= this.generatedTime) {
+                    counter = 0;
+                    this.generatedTime = simGenerator.exponential(3.0);
                     Customer customer = createCustomer();
                     enterShop(customer.getId());
                 }
